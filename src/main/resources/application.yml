@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/blogengine?useUnicode=true&serverTimezone=UTC&useSSL=false&verifyServerCertificate=false
+    username: root
+    password: 3s5a6dslipknot
+  jpa:
+    show-sql: false
+    hibernate.ddl-auto: create
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+
+blog:
+  title: DevPub
+  subtitle: Минутка щедрости разработчиков
+  phone: +7 999 532-77-10
+  email: newmail@mail.ru
+  copyright: Андреев Иннокентий
+  copyrightFrom: 2020
