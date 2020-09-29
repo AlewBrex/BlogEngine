@@ -1,12 +1,18 @@
 spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
   datasource:
-    url: jdbc:mysql://localhost:3306/blogengine?useUnicode=true&serverTimezone=UTC&useSSL=false&verifyServerCertificate=false
+    url: jdbc:mysql://localhost:3306/blogengine?allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=UTC&useSSL=false&verifyServerCertificate=false
     username: root
     password: 3s5a6dslipknot
+  flyway:
+    locations=classpath:
+      db/migration/V1__create_blog.sql
+    enabled: false
   jpa:
     show-sql: false
-    hibernate.ddl-auto: create
-    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: none
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
 
 blog:
   title: DevPub

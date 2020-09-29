@@ -24,7 +24,7 @@ public class Post
     @Column(name = "moderator_id", columnDefinition = "INT")
     private User moderatorId;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
     private User userId;
 
