@@ -1,7 +1,9 @@
 package main.api.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+@Data
 public class CommentRequest
 {
     @JsonProperty("parent_id")
@@ -11,26 +13,10 @@ public class CommentRequest
     private int postId;
     private String text;
 
-    public CommentRequest commentRequest(int parentId, int postId, String text)
+    public CommentRequest(int parentId, int postId, String text)
     {
         this.parentId = parentId;
         this.postId = postId;
         this.text = text;
-        return this;
-    }
-
-    public int getParentId()
-    {
-        return parentId;
-    }
-
-    public int getPostId()
-    {
-        return postId;
-    }
-
-    public String getText()
-    {
-        return text;
     }
 }

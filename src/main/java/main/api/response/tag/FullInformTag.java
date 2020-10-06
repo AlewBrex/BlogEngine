@@ -1,29 +1,15 @@
 package main.api.response.tag;
 
-import java.util.HashSet;
+import lombok.Data;
 import java.util.Set;
 
+@Data
 public class FullInformTag
 {
-    private Set<TagResponse> nameTagResponse;
+    private Set<TagResponse> tags;
 
-    public FullInformTag(Set<TagResponse> nameTagResponse)
+    public FullInformTag(Set<TagResponse> tags)
     {
-        this.nameTagResponse = nameTagResponse;
-    }
-
-    public Set<String> getSetNameTagResponse()
-    {
-        Set<String> strings = new HashSet<>();
-        for (TagResponse name : nameTagResponse)
-        {
-            strings.add(name.getName());
-        }
-        return strings;
-    }
-
-    public Set<TagResponse> getFullInformTag()
-    {
-        return nameTagResponse;
+        this.tags = tags;
     }
 }

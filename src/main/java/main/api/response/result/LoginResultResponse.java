@@ -1,29 +1,18 @@
 package main.api.response.result;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import main.api.response.user.AllUserInformation;
 
+@Data
 public class LoginResultResponse
 {
-    @JsonProperty("result")
-    private OkResultResponse okResultResponse;
-    @JsonProperty("user")
-    private AllUserInformation allUserInformation;
+    private OkResultResponse result;
+    private AllUserInformation user;
 
-    public LoginResultResponse(OkResultResponse okResultResponse1,
-                               AllUserInformation allUserInformation1)
+    public LoginResultResponse(OkResultResponse result,
+                               AllUserInformation user)
     {
-        this.okResultResponse = okResultResponse1.okResultResponse(okResultResponse1.isResult());
-        this.allUserInformation = allUserInformation1;
-    }
-
-    public OkResultResponse getOkResultResponse()
-    {
-        return okResultResponse;
-    }
-
-    public AllUserInformation getAllUserInformation()
-    {
-        return allUserInformation;
+        this.result = result;
+        this.user = user;
     }
 }

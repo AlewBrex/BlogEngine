@@ -1,47 +1,24 @@
 package main.api.response.user;
 
+import lombok.Data;
+
+@Data
 public class AllUserInformation
 {
-    private UserResponse userResponse;
+    private UserWithPhoto user;
     private String email;
     private boolean moderation;
     private int moderationCount;
     private boolean settings;
 
-    public AllUserInformation allUserInformation(UserResponse userResponse1, String email,
+    public AllUserInformation(UserWithPhoto user, String email,
                               boolean moderation, int moderationCount,
                               boolean settings)
     {
-        this.userResponse = userResponse1.userTreeResponse(
-                userResponse1.getId(),
-                userResponse1.getName(),
-                userResponse1.getPhoto());
+        this.user = user;
         this.email = email;
         this.moderation = moderation;
         this.moderationCount = moderationCount;
         this.settings = settings;
-        return this;
-    }
-
-
-
-    public String getEmail()
-    {
-        return email;
-    }
-
-    public boolean isModeration()
-    {
-        return moderation;
-    }
-
-    public int getModerationCount()
-    {
-        return moderationCount;
-    }
-
-    public boolean isSettings()
-    {
-        return settings;
     }
 }

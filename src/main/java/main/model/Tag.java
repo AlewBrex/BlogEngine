@@ -1,11 +1,14 @@
 package main.model;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Set;
 
 @Entity
 @Table(name = "tags")
+@Data
 public class Tag
 {
     @Id
@@ -16,27 +19,7 @@ public class Tag
     @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private String name;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "tag", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Tag2Post> tag2Posts;
-
-    public int getId()
-    {
-        return id;
-    }
-
-    public void setId(int id)
-    {
-        this.id = id;
-    }
-
-    public String getName()
-    {
-        return name;
-    }
-
-    public void setName(String name)
-    {
-        this.name = name;
-    }
 }

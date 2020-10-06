@@ -1,7 +1,9 @@
-package main.api.request;
+package main.api.request.change;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+@Data
 public class ChangePasswordRequest
 {
     private String code;
@@ -11,33 +13,12 @@ public class ChangePasswordRequest
     @JsonProperty("captcha_secret")
     private String captchaSecret;
 
-    public ChangePasswordRequest changePasswordRequest(String code, String password,
+    public ChangePasswordRequest(String code, String password,
                                  String captcha, String captchaSecret)
     {
         this.code = code;
         this.password = password;
         this.captcha = captcha;
         this.captchaSecret = captchaSecret;
-        return this;
-    }
-
-    public String getCode()
-    {
-        return code;
-    }
-
-    public String getPassword()
-    {
-        return password;
-    }
-
-    public String getCaptcha()
-    {
-        return captcha;
-    }
-
-    public String getCaptchaSecret()
-    {
-        return captchaSecret;
     }
 }

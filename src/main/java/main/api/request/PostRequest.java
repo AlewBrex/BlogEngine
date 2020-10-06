@@ -1,8 +1,10 @@
 package main.api.request;
 
+import lombok.Data;
 import main.model.Tag;
 import java.util.Set;
 
+@Data
 public class PostRequest
 {
     private long timestamp;
@@ -11,40 +13,14 @@ public class PostRequest
     private Set<Tag> tags;
     private String text;
 
-    public PostRequest postRequest(long timestamp, int active,
-                                   String title, Set<Tag> tags,
-                                   String text)
+    public PostRequest(long timestamp, int active,
+                           String title, Set<Tag> tags,
+                           String text)
     {
         this.timestamp = timestamp;
         this.active = active;
         this.title = title;
         this.tags = tags;
         this.text = text;
-        return this;
-    }
-
-    public long getTimestamp()
-    {
-        return timestamp;
-    }
-
-    public int getActive() {
-        return active;
-    }
-
-    public String getTitle()
-    {
-
-        return title;
-    }
-
-    public Set<Tag> getTags()
-    {
-        return tags;
-    }
-
-    public String getText()
-    {
-        return text;
     }
 }

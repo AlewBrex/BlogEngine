@@ -1,17 +1,14 @@
 package main.api.response.result;
 
+import lombok.Data;
+
+@Data
 public class OkResultResponse
 {
     private boolean result;
 
-    public OkResultResponse okResultResponse(boolean result)
+    public OkResultResponse(boolean result)
     {
         this.result = result;
-        return this;
-    }
-
-    public boolean isResult()
-    {
-        return result;
     }
 }

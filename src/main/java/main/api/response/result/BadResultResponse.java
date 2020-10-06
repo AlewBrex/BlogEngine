@@ -1,30 +1,18 @@
 package main.api.response.result;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import lombok.Data;
 import java.util.Map;
 
+@Data
 public class BadResultResponse
 {
-    @JsonProperty("result")
-    private OkResultResponse okResultResponse;
+    private OkResultResponse result;
     private Map<String, String> errors;
 
-    public BadResultResponse badResultResponse(OkResultResponse okResultResponse1,
-                                               Map<String, String> errors)
+    public BadResultResponse(OkResultResponse result,
+                             Map<String, String> errors)
     {
-        this.okResultResponse = okResultResponse1.okResultResponse(okResultResponse1.isResult());
+        this.result = result;
         this.errors = errors;
-        return this;
-    }
-
-    public OkResultResponse getOkResultResponse()
-    {
-        return okResultResponse;
-    }
-
-    public Map<String, String> getErrors()
-    {
-        return errors;
     }
 }

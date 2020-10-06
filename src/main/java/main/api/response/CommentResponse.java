@@ -1,44 +1,22 @@
 package main.api.response;
 
-import main.api.response.user.UserResponse;
+import lombok.Data;
+import main.api.response.user.UserWithPhoto;
 
+@Data
 public class CommentResponse
 {
     private int id;
     private long timestamp;
     private String text;
-    private UserResponse userResponse;
+    private UserWithPhoto user;
 
-
-    public CommentResponse commentResponse(int id, long timestamp, String text, UserResponse userResponse1)
+    public CommentResponse(int id, long timestamp, String text,
+                           UserWithPhoto user)
     {
         this.id = id;
         this.timestamp = timestamp;
         this.text = text;
-        this.userResponse = userResponse1.userTreeResponse(
-                userResponse1.getId(),
-                userResponse1.getName(),
-                userResponse1.getPhoto());
-        return this;
-    }
-
-    public int getId()
-    {
-        return id;
-    }
-
-    public long getTimestamp()
-    {
-        return timestamp;
-    }
-
-    public String getText()
-    {
-        return text;
-    }
-
-    public UserResponse getUserResponse()
-    {
-        return userResponse;
+        this.user = user;
     }
 }

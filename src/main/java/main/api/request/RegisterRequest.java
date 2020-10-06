@@ -1,7 +1,9 @@
 package main.api.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+@Data
 public class RegisterRequest
 {
     @JsonProperty("e_mail")
@@ -12,7 +14,7 @@ public class RegisterRequest
     @JsonProperty("captcha_secret")
     private String captchaSecret;
 
-    public RegisterRequest registerRequest(String email, String password,
+    public RegisterRequest(String email, String password,
                            String captcha, String name,
                            String captchaSecret)
     {
@@ -21,31 +23,5 @@ public class RegisterRequest
         this.captcha = captcha;
         this.name = name;
         this.captchaSecret = captchaSecret;
-        return this;
-    }
-
-    public String getEmail()
-    {
-        return email;
-    }
-
-    public String getPassword()
-    {
-        return password;
-    }
-
-    public String getCaptcha()
-    {
-        return captcha;
-    }
-
-    public String getName()
-    {
-        return name;
-    }
-
-    public String getCaptchaSecret()
-    {
-        return captchaSecret;
     }
 }

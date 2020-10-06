@@ -13,9 +13,8 @@ public class SettingsService
 
     public SettingsResponse getGlobalSettings()
     {
-        SettingsResponse settingsResponse = new SettingsResponse();
-        settingsResponse.setMultiuserMode(true);
-        settingsResponse.setStatisticsIsPublic(true);
+        SettingsResponse settingsResponse = new SettingsResponse(true,
+                false, true);
         return settingsResponse;
     }
 }
