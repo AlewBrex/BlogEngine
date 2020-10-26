@@ -5,6 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class TagService
 {
+    private final TagRepository tagRepository;
+
     @Autowired
-    private TagRepository tagRepository;
+    public TagService(TagRepository tagRepository)
+    {
+        this.tagRepository = tagRepository;
+    }
 }

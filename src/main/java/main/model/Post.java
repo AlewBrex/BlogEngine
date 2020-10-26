@@ -1,5 +1,6 @@
 package main.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -10,6 +11,7 @@ import java.util.Set;
 @Entity
 @Table(name = "posts")
 @Data
+@AllArgsConstructor
 public class Post
 {
     @Id
@@ -24,12 +26,13 @@ public class Post
     @Column(name = "moderation_status", nullable = false, columnDefinition = "enum default 'NEW'")
     private ModerationStatus moderationStatus;
 
-    @Column(name = "moderator_id", columnDefinition = "INT")
-    private User moderatorId;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinColumn(name = "moderator_id", columnDefinition = "INT")
+    private User isModerator;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User userId;
+    private User user;
 
     @Column(nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime time;
@@ -43,32 +46,18 @@ public class Post
     @Column(name = "view_count", nullable = false, columnDefinition = "INT")
     private int viewCount;
 
-    @ManyToMany(mappedBy = "post", fetch = FetchType.LAZY)
-    @JoinTable(name = "posts_tags", joinColumns = {@JoinColumn(name = "post_id")},
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "tag2posts", joinColumns = {@JoinColumn(name = "post_id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id")})
     private Set<Tag> tags;
 
-    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<PostComment> postComments;
+    private Set<Comment> comments;
 
-    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<PostVote> postVotes;
-
-    public Post(int id, int isActive, ModerationStatus moderationStatus, User moderatorId, User userId,
-                LocalDateTime time, String title, String text, int viewCount)
-    {
-        this.id = id;
-        this.isActive = isActive;
-        this.moderationStatus = moderationStatus;
-        this.moderatorId = moderatorId;
-        this.userId = userId;
-        this.time = time;
-        this.title = title;
-        this.text = text;
-        this.viewCount = viewCount;
-    }
+    private Set<Vote> votes;
 
     public enum  ModerationStatus
     {

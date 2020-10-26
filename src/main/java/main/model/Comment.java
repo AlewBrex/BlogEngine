@@ -1,5 +1,6 @@
 package main.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -10,23 +11,25 @@ import java.util.Set;
 @Entity
 @Table(name = "post_comments")
 @Data
-public class PostComment
+@AllArgsConstructor
+public class Comment
 {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "parent_id")
-    private PostComment parentId;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false, columnDefinition = "INT")
-    private Post postId;
+    private Post post;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User userId;
+    private User user;
 
     @Column(name = "time", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime time;
@@ -36,5 +39,5 @@ public class PostComment
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<PostComment> comments;
+    private Set<Comment> comments;
 }

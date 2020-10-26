@@ -1,5 +1,6 @@
 package main.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -9,7 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "post_votes")
 @Data
-public class PostVote
+@AllArgsConstructor
+public class Vote
 {
     @Id
     @NotNull
@@ -18,11 +20,11 @@ public class PostVote
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User userId;
+    private User user;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false, columnDefinition = "INT")
-    private Post postId;
+    private Post post;
 
     @Column(nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime time;

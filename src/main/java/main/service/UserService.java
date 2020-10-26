@@ -5,6 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class UserService
 {
+    private final UserRepository userRepository;
+
     @Autowired
-    private UserRepository userRepository;
+    public UserService(UserRepository userRepository)
+    {
+        this.userRepository = userRepository;
+    }
+
 }

@@ -1,5 +1,6 @@
 package main.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -10,6 +11,7 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @Data
+@AllArgsConstructor
 public class User
 {
     @Id
@@ -40,7 +42,7 @@ public class User
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<Post> author;
+    private Set<Post> posts;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Column(nullable = false)
@@ -48,9 +50,9 @@ public class User
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<PostComment> comments;
+    private Set<Comment> comments;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<PostVote> votes;
+    private Set<Vote> votes;
 }

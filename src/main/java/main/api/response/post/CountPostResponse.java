@@ -1,17 +1,13 @@
 package main.api.response.post;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
 public class CountPostResponse
 {
     private int count;
     private Set<PostResponse> posts;
-
-    public CountPostResponse(int count, Set<PostResponse> posts)
-    {
-        this.count = count;
-        this.posts = posts;
-    }
 }

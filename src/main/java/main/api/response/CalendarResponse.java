@@ -1,20 +1,15 @@
 package main.api.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Map;
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
 public class CalendarResponse
 {
     private Set<Integer> years;
     private Map<String, Integer> posts;
-
-    public CalendarResponse(Set<Integer> years,
-                            Map<String, Integer> posts)
-    {
-        this.years = years;
-        this.posts = posts;
-    }
 }

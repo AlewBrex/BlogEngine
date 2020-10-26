@@ -1,8 +1,10 @@
 package main.api.response.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class AllUserInformation
 {
     private UserWithPhoto user;
@@ -10,15 +12,4 @@ public class AllUserInformation
     private boolean moderation;
     private int moderationCount;
     private boolean settings;
-
-    public AllUserInformation(UserWithPhoto user, String email,
-                              boolean moderation, int moderationCount,
-                              boolean settings)
-    {
-        this.user = user;
-        this.email = email;
-        this.moderation = moderation;
-        this.moderationCount = moderationCount;
-        this.settings = settings;
-    }
 }
