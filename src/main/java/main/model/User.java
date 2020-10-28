@@ -2,6 +2,7 @@ package main.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import java.util.Set;
 @Table(name = "users")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class User
 {
     @Id
@@ -34,7 +36,7 @@ public class User
     @Column(name = "password", nullable = false, columnDefinition = "VARCHAR(255)")
     private String password;
 
-    @Column(name = "code", nullable = false, columnDefinition = "VARCHAR(255)")
+    @Column(name = "code", columnDefinition = "VARCHAR(255)")
     private String code;
 
     @Column(name = "photo", nullable = false, columnDefinition = "TEXT")
