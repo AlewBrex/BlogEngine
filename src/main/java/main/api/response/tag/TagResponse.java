@@ -8,5 +8,5 @@ import lombok.Data;
 public class TagResponse
 {
     private String name;
-    private byte weight;
+    private Double weight;
 }

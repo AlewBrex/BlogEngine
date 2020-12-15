@@ -29,7 +29,7 @@ public class Comment
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User user;
+    private User users;
 
     @Column(name = "time", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime time;

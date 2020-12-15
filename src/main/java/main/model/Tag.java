@@ -2,15 +2,16 @@ package main.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Set;
 
 @Entity
 @Table(name = "tags")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class Tag
 {
     @Id
@@ -20,8 +21,4 @@ public class Tag
 
     @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private String name;
-//
-//    @ManyToMany(mappedBy = "tag", fetch = FetchType.LAZY)
-//    @Column(nullable = false)
-//    private Set<Tag2Post> tag2Posts;
 }

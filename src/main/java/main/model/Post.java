@@ -30,9 +30,9 @@ public class Post
     @JoinColumn(name = "moderator_id", columnDefinition = "INT")
     private User isModerator;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToOne( cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User user;
+    private User users;
 
     @Column(nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime time;

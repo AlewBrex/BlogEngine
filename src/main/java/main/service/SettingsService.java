@@ -1,9 +1,11 @@
 package main.service;
 
 import lombok.extern.log4j.Log4j2;
+import main.api.request.SettingsRequest;
 import main.api.response.SettingsResponse;
 import main.model.GlobalSettings;
 import main.repository.GlobalSettingsRepository;
+import main.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,24 +14,59 @@ import org.springframework.stereotype.Service;
 public class SettingsService
 {
     private final GlobalSettingsRepository globalSettingsRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public SettingsService(GlobalSettingsRepository globalSettingsRepository)
+    public SettingsService(GlobalSettingsRepository globalSettingsRepository, UserRepository userRepository)
     {
         this.globalSettingsRepository = globalSettingsRepository;
+        this.userRepository = userRepository;
     }
 
-    public SettingsResponse getGlobalSettings()
+    public SettingsResponse getSettings()
     {
-        SettingsResponse settingsResponse = new SettingsResponse(false,
-                true, false);
+        GlobalSettings multi = globalSettingsRepository.findByCode("MULTIUSER_MODE");
+        GlobalSettings post = globalSettingsRepository.findByCode("POST_PREMODERATION");
+        GlobalSettings stat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
         log.info("Message");
-        return settingsResponse;
+        return new SettingsResponse(
+                strgBoolean(multi.getValue()),
+                strgBoolean(post.getValue()),
+                strgBoolean(stat.getValue()));
     }
 
-    public void saveGlobalSettings(GlobalSettings globalSettings)
+    public void saveGlobalSettings(SettingsRequest settingsRequest)
     {
-        globalSettingsRepository.save(globalSettings);
+        boolean multi = settingsRequest.isMultiuserMode();
+        boolean post = settingsRequest.isPostPremoderation();
+        boolean stat = settingsRequest.isStatisticsIsPublic();
+
+        String multiUser = blnString(multi);
+        String postPre = blnString(post);
+        String statistics = blnString(stat);
+
+        GlobalSettings strMulti = globalSettingsRepository.findByCode("MULTIUSER_MODE");
+        GlobalSettings strPost = globalSettingsRepository.findByCode("POST_PREMODERATION");
+        GlobalSettings strStat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
+
+        strMulti.setValue(multiUser);
+        strPost.setValue(postPre);
+        strPost.setValue(statistics);
+
+        globalSettingsRepository.save(strMulti);
+        globalSettingsRepository.save(strPost);
+        globalSettingsRepository.save(strStat);
+
         log.info("Message");
+    }
+
+    private boolean strgBoolean(String code)
+    {
+        return code.equals("YES");
+    }
+
+    private String blnString(boolean bln)
+    {
+        return bln ? "YES" : "NO";
     }
 }

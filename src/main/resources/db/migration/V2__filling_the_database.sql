@@ -111,6 +111,6 @@ INSERT INTO blogengine.post_voters VALUES
 (51, 3, 12, "2020-08-08 00:11:00", 1);
 
 INSERT INTO blogengine.global_settings VALUES
-(1, "MULTIUSER_MODE", "Многопользовательский режим", "YES"),
+(1, "MULTIUSER_MODE", "Многопользовательский режим", "NO"),
 (2, "POST_PREMODERATION", "Премодерация постов", "YES"),
 (3, "STATISTICS_IS_PUBLIC", "Показывать всем статистику блога", "YES");

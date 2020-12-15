@@ -8,6 +8,6 @@ import main.api.response.user.AllUserInformation;
 @AllArgsConstructor
 public class LoginResultResponse
 {
-    private OkResultResponse result;
+    private boolean result;
     private AllUserInformation user;
 }

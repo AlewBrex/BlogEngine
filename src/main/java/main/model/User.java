@@ -42,19 +42,19 @@ public class User
     @Column(name = "photo", nullable = false, columnDefinition = "TEXT")
     private String photo;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "users", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Post> posts;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "users", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Post> moderator;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "users", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Comment> comments;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "users", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Vote> votes;
 }
