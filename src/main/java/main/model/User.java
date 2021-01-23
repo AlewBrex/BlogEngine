@@ -14,8 +14,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User
-{
+public class User {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,4 +56,12 @@ public class User
     @OneToMany(mappedBy = "users", fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Vote> votes;
+
+    public User(LocalDateTime regTime, String name, String email,
+                String password) {
+        this.regTime = regTime;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
 }

@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class StatisticsResponse
-{
+public class StatisticsResponse {
     private int postCount;
     private int likesCount;
     private int dislikesCount;

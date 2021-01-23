@@ -6,8 +6,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class LikeDislikeRequest
-{
+public class LikeDislikeRequest {
     @JsonProperty("post_id")
     private int postId;
 }

@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UserResponse
-{
+public class UserResponse {
     private int id;
     private String name;
 }

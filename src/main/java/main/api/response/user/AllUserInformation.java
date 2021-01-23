@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class AllUserInformation
-{
+public class AllUserInformation {
     private UserWithPhoto user;
     private String email;
     private boolean moderation;

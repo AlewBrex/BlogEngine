@@ -6,8 +6,7 @@ import main.api.response.user.UserResponse;
 
 @Data
 @AllArgsConstructor
-public class PostResponse
-{
+public class PostResponse {
     private int id;
     private long timestamp;
     private UserResponse user;

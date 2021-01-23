@@ -6,8 +6,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ModerationRequest
-{
+public class ModerationRequest {
     @JsonProperty("post_id")
     private int postId;
     private String decision;

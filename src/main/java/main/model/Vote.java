@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "post_votes")
 @Data
 @AllArgsConstructor
-public class Vote
-{
+public class Vote {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +30,11 @@ public class Vote
 
     @Column(nullable = false, columnDefinition = "TINYINT")
     private int value;
+
+    public Vote(User users, Post post, LocalDateTime time, int value) {
+        this.users = users;
+        this.post = post;
+        this.time = time;
+        this.value = value;
+    }
 }

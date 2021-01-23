@@ -12,8 +12,7 @@ import java.util.Set;
 @Table(name = "post_comments")
 @Data
 @AllArgsConstructor
-public class Comment
-{
+public class Comment {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,4 +39,12 @@ public class Comment
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Column(nullable = false)
     private Set<Comment> comments;
+
+    public Comment(Comment parent, Post post, User users, LocalDateTime time, String text) {
+        this.parent = parent;
+        this.post = post;
+        this.users = users;
+        this.time = time;
+        this.text = text;
+    }
 }

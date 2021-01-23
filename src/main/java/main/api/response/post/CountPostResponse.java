@@ -7,8 +7,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class CountPostResponse
-{
+public class CountPostResponse {
     private int count;
     private List<PostResponse> posts;
 }

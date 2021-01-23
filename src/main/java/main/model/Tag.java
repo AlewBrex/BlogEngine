@@ -12,8 +12,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Tag
-{
+public class Tag {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)

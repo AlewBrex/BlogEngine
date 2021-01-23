@@ -12,8 +12,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GlobalSettings
-{
+public class GlobalSettings {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class OkResultResponse
-{
+public class OkResultResponse {
     private boolean result;
 }

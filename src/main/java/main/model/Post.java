@@ -2,6 +2,7 @@ package main.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.criterion.Example;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -12,8 +13,7 @@ import java.util.Set;
 @Table(name = "posts")
 @Data
 @AllArgsConstructor
-public class Post
-{
+public class Post {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +26,10 @@ public class Post
     @Column(name = "moderation_status", nullable = false, columnDefinition = "enum default 'NEW'")
     private ModerationStatus moderationStatus;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "moderator_id", columnDefinition = "INT")
-    private User isModerator;
+    private Integer isModerator;
 
-    @ManyToOne( cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
     private User users;
 
@@ -59,8 +58,17 @@ public class Post
     @Column(nullable = false)
     private Set<Vote> votes;
 
-    public enum  ModerationStatus
-    {
+    public Post(int isActive, User users, LocalDateTime time,
+                String title, String text, Set<Tag> tags) {
+        this.isActive = isActive;
+        this.users = users;
+        this.time = time;
+        this.title = title;
+        this.text = text;
+        this.tags = tags;
+    }
+
+    public enum ModerationStatus {
         NEW,
         ACCEPTED,
         DECLINED

@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "captcha_codes")
 @Data
 @AllArgsConstructor
-public class CaptchaCode
-{
+public class CaptchaCode {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,4 +25,10 @@ public class CaptchaCode
 
     @Column(name = "secret_code", nullable = false, columnDefinition = "TINYTEXT")
     private String secretCode;
+
+    public CaptchaCode(LocalDateTime time, String code, String secretCode) {
+        this.time = time;
+        this.code = code;
+        this.secretCode = secretCode;
+    }
 }

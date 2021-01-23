@@ -19,3 +19,18 @@ blog:
   email: newmail@mail.ru
   copyright: Андреев Иннокентий
   copyrightFrom: 2020
+
+captcha:
+  time: 3_600
+  image:
+    format: png
+    title_path: data:image/png;base64,
+    height: 35
+    width: 100
+
+upload_file:
+  directory: upload
+  format: jpg
+  height: 36
+  width: 36
+  size: 5
