@@ -1,8 +1,6 @@
 package main.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -15,6 +13,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
+
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,5 +62,13 @@ public class User {
         this.name = name;
         this.email = email;
         this.password = password;
+    }
+
+    public Role getRole() {
+        return userModerator() ? Role.MODERATOR : Role.USER;
+    }
+
+    public Boolean userModerator() {
+        return isModerator == 1;
     }
 }

@@ -1,16 +1,28 @@
 package main.api.response.result;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import main.api.response.ResultResponse;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public class BadResultResponse extends OkResultResponse {
-    private Map<String, String> errors;
+@AllArgsConstructor
+@NoArgsConstructor
+public class BadResultResponse implements ResultResponse {
+    private boolean result;
+    private Map<String, String> errors = new HashMap<>();
 
-    public BadResultResponse(boolean result) {
-        super(result);
+    public BadResultResponse(Map<String, String> errors) {
+        this.result = false;
+        this.errors = errors;
     }
 
-    public BadResultResponse(boolean result, Map<String, String> errors) {
-        super(result);
-        this.errors = errors;
+    public Map<String, String> getErrors() {
+        return errors;
+    }
+
+    public void addError(String name, String description) {
+        errors.put(name, description);
     }
 }

@@ -9,8 +9,11 @@ spring:
     enabled: true
   jpa:
     show_sql: true
-    hibernate.ddl-auto: none
-    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
 blog:
   title: DevPub
@@ -18,19 +21,49 @@ blog:
   phone: +7 999 532-77-10
   email: newmail@mail.ru
   copyright: Андреев Иннокентий
-  copyrightFrom: 2020
+  copyright_from: 2020
 
 captcha:
-  time: 3_600
+  time: 3_600 #seconds
+  length_key: 33
   image:
     format: png
     title_path: data:image/png;base64,
-    height: 35
-    width: 100
+    height: 35 #px
+    width: 100 #px
 
-upload_file:
-  directory: upload
-  format: jpg
-  height: 36
-  width: 36
-  size: 5
+user:
+  upload_file:
+    root_folder: images
+    directory: upload
+    avatars_folder: avatars
+    format: jpg
+    height: 36 #px
+    width: 36 #px
+    size: 5_000_000 #bytes
+  email:
+    valid_reg: "[\\D\\d]+@[\\D\\d*\\u002E]+[\\D]"
+  password:
+    min_length: 6
+    length_key: 55
+    subject_string: "Ссылка для восстановления пароля"
+    concat_string: "/login/change-password/"
+    algorithm_string: "MD5"
+
+comment:
+  min_length: 50
+  max_length: 5000
+
+post:
+  upload_file:
+    root_folder: images
+    directory: upload
+    format: jpg
+  title:
+    min_length: 3
+    max_length: 300
+  text:
+    min_length: 50
+    max_length: 5000
+  announce:
+    max_length: 150

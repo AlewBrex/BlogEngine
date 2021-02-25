@@ -2,11 +2,13 @@ package main.api.response.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class AllUserInformation {
-    private UserWithPhoto user;
+@NoArgsConstructor
+public class AllUserInformationResponse {
+    private UserWithPhotoResponse user;
     private String email;
     private boolean moderation;
     private int moderationCount;

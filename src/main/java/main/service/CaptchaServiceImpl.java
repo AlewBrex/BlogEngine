@@ -6,7 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import main.api.response.CaptchaResponse;
 import main.model.CaptchaCode;
-import main.repository.CaptchaCodeRepository;
+import main.model.repository.CaptchaCodeRepository;
+import main.service.interfaces.CaptchaService;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ import java.util.stream.IntStream;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class CaptchaService {
+public class CaptchaServiceImpl implements CaptchaService {
     @Value("${captcha.image.title_path}")
     private String titlePath;
     @Value("${captcha.image.format}")
@@ -35,6 +36,9 @@ public class CaptchaService {
     private int width;
     @Value("${captcha.time}")
     private long time;
+    @Value("${captcha.length_key}")
+    private int lengthKey;
+
     private final CaptchaCodeRepository captchaCodeRepository;
     private char[] alphabetAndDigits = "abd2ef3g45h6k7n89rstyz".toCharArray();
 
@@ -67,7 +71,7 @@ public class CaptchaService {
     }
 
     private String generateSecretCode() {
-        return IntStream.range(0, 33).map(i -> (int) (Math.random() * (alphabetAndDigits.length - 1)))
+        return IntStream.range(0, lengthKey).map(i -> (int) (Math.random() * (alphabetAndDigits.length - 1)))
                 .mapToObj(a -> String.valueOf(alphabetAndDigits[a])).collect(Collectors.joining());
     }
 }

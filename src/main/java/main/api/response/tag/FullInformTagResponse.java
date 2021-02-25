@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class FullInformTag {
+public class FullInformTagResponse {
     private List<TagResponse> tags;
 }

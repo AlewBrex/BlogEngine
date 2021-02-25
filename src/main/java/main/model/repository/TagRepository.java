@@ -1,4 +1,4 @@
-package main.repository;
+package main.model.repository;
 
 import main.model.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,6 +33,6 @@ public interface TagRepository extends JpaRepository<Tag, Integer> {
     @Query(value = "SELECT COUNT(name) AS count FROM tags WHERE name = \"?1\"", nativeQuery = true)
     Integer countTagByName(String tag);
 
-    @Query(value = "SELECT * FROM tags where name = \"?\";", nativeQuery = true)
+    @Query(value = "SELECT * FROM tags where name = \"?\"", nativeQuery = true)
     Tag getTagByName(String tagName);
 }

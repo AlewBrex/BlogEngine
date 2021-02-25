@@ -1,29 +1,24 @@
 package main.api.response.result;
 
-import main.api.response.user.AllUserInformation;
+import lombok.Data;
+import main.api.response.ResultResponse;
+import main.api.response.user.AllUserInformationResponse;
 
-public class LoginResultResponse extends OkResultResponse {
-    private AllUserInformation user;
+@Data
+public class LoginResultResponse implements ResultResponse {
+    private boolean result;
+    private AllUserInformationResponse user;
 
-    public LoginResultResponse(boolean result) {
-        super(result);
-    }
-
-    public LoginResultResponse(boolean result, AllUserInformation user) {
-        super(result);
+    public LoginResultResponse(AllUserInformationResponse user) {
+        this.result = true;
         this.user = user;
     }
 
-    public AllUserInformation getUser() {
+    public AllUserInformationResponse getUser() {
         return user;
     }
 
-    public void setUser(AllUserInformation user) {
+    public void setUser(AllUserInformationResponse user) {
         this.user = user;
-    }
-
-    @Override
-    public boolean isResult() {
-        return super.isResult();
     }
 }

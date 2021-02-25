@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   CONSTRAINT `fk_moderation_id` FOREIGN KEY (`moderator_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE IF NOT EXISTS `post_voters` (
+CREATE TABLE IF NOT EXISTS `post_votes` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `post_id` int NOT NULL,

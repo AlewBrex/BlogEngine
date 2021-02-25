@@ -5,20 +5,22 @@ import lombok.extern.log4j.Log4j2;
 import main.api.request.SettingsRequest;
 import main.api.response.SettingsResponse;
 import main.model.GlobalSettings;
-import main.repository.GlobalSettingsRepository;
+import main.model.repository.GlobalSettingsRepository;
+import main.service.interfaces.SettingsService;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class SettingsService {
+public class SettingsServiceImpl implements SettingsService {
+
     private final GlobalSettingsRepository globalSettingsRepository;
 
     public SettingsResponse getSettings() {
         GlobalSettings multi = globalSettingsRepository.findByCode("MULTIUSER_MODE");
         GlobalSettings post = globalSettingsRepository.findByCode("POST_PREMODERATION");
         GlobalSettings stat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
-        log.info("Message");
+        log.info("Получены настройки");
         return new SettingsResponse(
                 strgBoolean(multi.getValue()),
                 strgBoolean(post.getValue()),
@@ -41,7 +43,7 @@ public class SettingsService {
         globalSettingsRepository.save(strMulti);
         globalSettingsRepository.save(strPost);
         globalSettingsRepository.save(strStat);
-        log.info("Message");
+        log.info("Установлены новые настройки");
     }
 
     private boolean strgBoolean(String code) {

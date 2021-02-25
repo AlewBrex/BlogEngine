@@ -1,18 +1,21 @@
 package main.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.hibernate.criterion.Example;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Table(name = "posts")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class Post {
     @Id
     @NotNull
@@ -27,7 +30,7 @@ public class Post {
     private ModerationStatus moderationStatus;
 
     @JoinColumn(name = "moderator_id", columnDefinition = "INT")
-    private Integer isModerator;
+    private Integer moderatorId;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
@@ -46,20 +49,20 @@ public class Post {
     private int viewCount;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "tag2posts", joinColumns = {@JoinColumn(name = "post_id")},
+    @JoinTable(name = "tag2post", joinColumns = {@JoinColumn(name = "post_id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id")})
-    private Set<Tag> tags;
+    private List<Tag> tags;
 
     @OneToMany(fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<Comment> comments;
+    private List<Comment> comments;
 
     @OneToMany(fetch = FetchType.LAZY)
     @Column(nullable = false)
-    private Set<Vote> votes;
+    private List<Vote> votes;
 
     public Post(int isActive, User users, LocalDateTime time,
-                String title, String text, Set<Tag> tags) {
+                String title, String text, List<Tag> tags) {
         this.isActive = isActive;
         this.users = users;
         this.time = time;

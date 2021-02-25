@@ -1,10 +1,11 @@
 package main.service;
 
 import lombok.RequiredArgsConstructor;
-import main.api.response.tag.FullInformTag;
+import main.api.response.tag.FullInformTagResponse;
 import main.api.response.tag.TagResponse;
 import main.model.Tag;
-import main.repository.TagRepository;
+import main.model.repository.TagRepository;
+import main.service.interfaces.TagService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,17 +13,20 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TagService {
+public class TagServiceImpl implements TagService {
+
     private final TagRepository tagRepository;
 
-    public FullInformTag getAllTags() {
+    public FullInformTagResponse getAllTags() {
         List<Tag> tagList = tagRepository.findAll();
-        return new FullInformTag(getListResponse(tagList));
+        List<TagResponse> responseList = getListResponse(tagList);
+        return new FullInformTagResponse(responseList);
     }
 
-    public FullInformTag getTagsWithQuery(String query) {
+    public FullInformTagResponse getTagsWithQuery(String query) {
         List<Tag> queryTagList = tagRepository.getTagByQuery(query);
-        return new FullInformTag(getListResponse(queryTagList));
+        List<TagResponse> responseList = getListResponse(queryTagList);
+        return new FullInformTagResponse(responseList);
     }
 
     private List<TagResponse> getListResponse(List<Tag> list) {

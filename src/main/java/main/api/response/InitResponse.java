@@ -17,6 +17,6 @@ public class InitResponse {
     private String email;
     @Value("${blog.copyright}")
     private String copyright;
-    @Value("${blog.copyrightFrom}")
+    @Value("${blog.copyright_from}")
     private String copyrightFrom;
 }
