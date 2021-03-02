@@ -14,7 +14,6 @@ import main.model.repository.VoteRepository;
 import main.service.interfaces.VoteService;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
@@ -40,29 +39,26 @@ public class VoteServiceImpl implements VoteService {
     private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal) {
         int id = likeDislikeRequest.getPostId();
         Post post = postRepository.getPostById(id);
-        User user = userServiceImpl.getCurrentUser(principal.getName());
+        User user = userServiceImpl.getCurrentUserByEmail(principal.getName());
         if (user == null) {
             log.error("User isn't authorized");
         }
         Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
-        if (vote == null) {
-            Vote firstVote = new Vote();
-            firstVote.setUsers(user);
-            firstVote.setPost(post);
-            firstVote.setTime(LocalDateTime.now());
-            firstVote.setValue(voteValue);
-            voteRepository.save(firstVote);
-            return true;
-        } else if (vote.getValue() != voteValue) {
+
+        if (vote == null || vote.getValue() != voteValue) {
             voteRepository.delete(vote);
-            Vote reverseVote = new Vote();
-            reverseVote.setUsers(user);
-            reverseVote.setPost(post);
-            reverseVote.setTime(LocalDateTime.now());
-            reverseVote.setValue(voteValue);
-            voteRepository.save(reverseVote);
-            return true;
+            getNewVote(user, post, voteValue);
         }
         return false;
+    }
+
+    private Boolean getNewVote(User user, Post post, Integer vote) {
+        Vote firstVote = new Vote();
+        firstVote.setUsers(user);
+        firstVote.setPost(post);
+        firstVote.setTime(LocalDateTime.now());
+        firstVote.setValue(vote);
+        voteRepository.save(firstVote);
+        return true;
     }
 }

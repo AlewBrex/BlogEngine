@@ -23,5 +23,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Integer existEmailOrNot(String email);
 
     @Query(value = "SELECT * FROM users u WHERE u.code = ?", nativeQuery = true)
-    User findByCode(String code);
+    Optional<User> findByCode(String code);
 }

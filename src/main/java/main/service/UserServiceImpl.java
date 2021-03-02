@@ -31,8 +31,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpSession;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -76,21 +76,30 @@ public class UserServiceImpl implements UserService {
         if (principal == null) {
             return new FalseResultResponse();
         }
-        User user = getCurrentUser(principal.getName());
+        User user = getCurrentUserByEmail(principal.getName());
         return new LoginResultResponse(getAllUserInformation(user));
     }
 
-    public ResultResponse login(LoginRequest loginRequest) {
-        Authentication auth = authenticationManager
-                .authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                loginRequest.getEmail(),
-                                loginRequest.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        org.springframework.security.core.userdetails.User user =
-                (org.springframework.security.core.userdetails.User) auth.getPrincipal();
-        User currentUser = getCurrentUser(user.getUsername());
-        return new LoginResultResponse(getAllUserInformation(currentUser));
+    public ResultResponse login(LoginRequest req) {
+        User userRepo = getCurrentUserByEmail(req.getEmail());
+        String checkHashPassword = generateHashPassword(req.getPassword());
+        if (userRepo.getPassword().equals(checkHashPassword)) {
+            Authentication auth = authenticationManager
+                    .authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    req.getEmail(),
+                                    req.getPassword()));
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            org.springframework.security.core.userdetails.User user =
+                    (org.springframework.security.core.userdetails.User) auth.getPrincipal();
+
+            User currentUser = getCurrentUserByEmail(user.getUsername());
+
+            return new LoginResultResponse(getAllUserInformation(currentUser));
+        } else {
+            return new FalseResultResponse();
+        }
     }
 
     public ResultResponse logout(Principal principal) {
@@ -98,12 +107,14 @@ public class UserServiceImpl implements UserService {
             log.warn("User isn't authorized");
             return new FalseResultResponse();
         }
+
         SecurityContextHolder.clearContext();
+
         return new OkResultResponse();
     }
 
     public ResultResponse myStatistics(Principal principal) {
-        User user = getCurrentUser(principal.getName());
+        User user = getCurrentUserByEmail(principal.getName());
         int userId = user.getId();
         int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
         int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
@@ -119,7 +130,7 @@ public class UserServiceImpl implements UserService {
     }
 
     public ResultResponse allStatistics(Principal principal) {
-        User user = getCurrentUser(principal.getName());
+        User user = getCurrentUserByEmail(principal.getName());
         boolean statisticsIsPublic = settingsRepository.codeAndValue("STATISTICS_IS_PUBLIC", "NO") > 0;
         boolean isModerator = user == null || user.getIsModerator() == 0;
         if (statisticsIsPublic && isModerator) {
@@ -135,11 +146,12 @@ public class UserServiceImpl implements UserService {
         return new StatisticsResponse(postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
     }
 
-    public ResultResponse restorePassword(RestoreRequest restoreRequest) {
-        String email = restoreRequest.getEmail();
-        User user = userRepository.getByEmail(email).get();
-        boolean inCorrectMail = !email.matches(correctMail);
+    public ResultResponse restorePassword(RestoreRequest req) {
+        User user = getCurrentUserByEmail(req.getEmail());
+
+        boolean inCorrectMail = !req.getEmail().matches(correctMail);
         boolean userNotExist = user == null;
+
         if (inCorrectMail || userNotExist) {
             log.info("Incorrect email or user don't exist");
             return new FalseResultResponse();
@@ -148,7 +160,7 @@ public class UserServiceImpl implements UserService {
             user.setCode(codeForRecovery);
             userRepository.save(user);
             SimpleMailMessage mimeMessage = new SimpleMailMessage();
-            mimeMessage.setTo(email);
+            mimeMessage.setTo(req.getEmail());
             mimeMessage.setSubject(subjectString);
             mimeMessage.setText(contactStringForMessage + codeForRecovery);
             JavaMailSender javaMailSender = mailConfig.javaMailSender();
@@ -158,68 +170,62 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public ResultResponse changePassword(ChangePasswordRequest changePasswordRequest) {
+    public ResultResponse changePassword(ChangePasswordRequest req) {
         BadResultResponse badResultResponse = new BadResultResponse();
-        String code = changePasswordRequest.getCode();
-        String password = changePasswordRequest.getPassword();
-        String captcha = changePasswordRequest.getCaptcha();
-        String captchaSecret = changePasswordRequest.getCaptchaSecret();
-        User user = userRepository.findByCode(code);
-        String captchaCode = captchaCodeRepository.getCaptchaCodeBySecretCode(captchaSecret);
-        boolean inCorrectCode = code.isBlank();
-        boolean inCorrectPassword = password.isBlank() || (password.length() < minLengthPassword);
-        boolean inCorrectCaptchaCode = captcha.isBlank() || !captchaCode.equals(code) || captchaSecret.isBlank();
-        if (inCorrectCode) {
+
+        User user = userRepository.findByCode(req.getCode())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException(
+                                String.format("user with code %s not found", req.getCode())));
+
+        if (req.getCode().isBlank()) {
             badResultResponse.addError("code", "Ссылка для восстановления пароля устарела." +
                     "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
         }
-        if (inCorrectPassword) {
+
+        if (isPasswordValid(req.getPassword())) {
             badResultResponse.addError("password", "Слишком короткий пароль");
         }
-        if (inCorrectCaptchaCode) {
+
+        if (isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
             badResultResponse.addError("captcha", "Код с картинки введён неверно");
         }
+
         if (badResultResponse.getErrors().size() > 0) {
             return badResultResponse;
         } else {
-            String newHashPassword = generateHashPassword(password);
-            user.setPassword(newHashPassword);
+            user.setPassword(generateHashPassword(req.getPassword()));
             userRepository.save(user);
             return new OkResultResponse();
         }
     }
 
-    public ResultResponse registerUser(RegisterRequest registerRequest) {
+    public ResultResponse registerUser(RegisterRequest req) {
         BadResultResponse badResultResponse = new BadResultResponse();
-        String email = registerRequest.getEmail();
-        String password = registerRequest.getPassword();
-        String name = registerRequest.getName();
-        String captcha = registerRequest.getCaptcha();
-        String captchaSecret = registerRequest.getCaptchaSecret();
-        boolean emailFalse = !email.matches(correctMail) && userRepository.getByEmail(email) != null;
-        boolean passwordFalse = password.isBlank() && password.length() < minLengthPassword;
-        boolean nameFalse = name.isBlank();
-        boolean captchaFalse = captcha.isBlank();
-        boolean captchaSecretFalse = !captchaCodeRepository.getCaptchaCodeBySecretCode(captchaSecret).equals(captcha);
-        if (emailFalse) {
+
+        if (isUserExist(req.getEmail())) {
             badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
         }
-        if (nameFalse) {
+
+        if (isNameBlank(req.getName())) {
             badResultResponse.addError("name", "Имя указано неверно");
         }
-        if (passwordFalse) {
+
+        if (isPasswordValid(req.getPassword())) {
             badResultResponse.addError("password", "Слишком короткий пароль");
         }
-        if (captchaFalse || captchaSecretFalse) {
+
+        if (isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
             badResultResponse.addError("captcha", "Код с картинки введён неверно");
         }
+
         if (badResultResponse.getErrors().size() > 0 || badResultResponse.getErrors() == null) {
             return badResultResponse;
         } else {
-            String newHashPassword = generateHashPassword(password);
+            String newHashPassword = generateHashPassword(req.getPassword());
             User user = new User();
-            user.setName(name);
-            user.setEmail(email);
+            user.setName(req.getName());
+            user.setEmail(req.getEmail());
             user.setPassword(newHashPassword);
             user.setRegTime(LocalDateTime.now());
             userRepository.save(user);
@@ -227,50 +233,49 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public ResultResponse editMyProfile(ChangeDataMyProfile changeDataMyProfile, Principal principal) {
+    public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
         BadResultResponse badResultResponse = new BadResultResponse();
-        String name = changeDataMyProfile.getName();
-        String email = changeDataMyProfile.getEmail();
-        String password = changeDataMyProfile.getPassword();
-        Byte removePhoto = changeDataMyProfile.getRemovePhoto();
-        MultipartFile multipartFile = changeDataMyProfile.getPhoto();
-        User user = getCurrentUser(principal.getName());
+
+        User user = getCurrentUserByEmail(principal.getName());
+
         String nameUserHttpSession = user.getName();
         String emailUserHttpSession = user.getEmail();
-        boolean trueEmail = email.matches(correctMail);
+
+        boolean trueEmail = change.getEmail().matches(correctMail);
         boolean existEmail = userRepository.existEmailOrNot(emailUserHttpSession) != null;
-        boolean notEqualsEmail = !email.equals(emailUserHttpSession);
-        boolean nameTrue = !name.isBlank() && !name.equals(nameUserHttpSession);
+        boolean notEqualsEmail = !change.getEmail().equals(emailUserHttpSession);
+        boolean nameTrue = !change.getName().isBlank() && !change.getName().equals(nameUserHttpSession);
 
         if (nameTrue && trueEmail && existEmail && notEqualsEmail) {
-            user.setName(name);
-            user.setEmail(email);
+            user.setName(change.getName());
+            user.setEmail(change.getEmail());
         } else {
             badResultResponse.addError("name", "Имя указано неверно");
             badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
         }
-        if (password != null) {
-            if (password.length() > minLengthPassword) {
-                String newPasswordUserHttpSession = generateHashPassword(password);
-                user.setPassword(newPasswordUserHttpSession);
+
+        if (change.getPassword() != null) {
+            if (isPasswordValid(change.getPassword())) {
+                user.setPassword(generateHashPassword(change.getPassword()));
             } else {
                 badResultResponse.addError("password", "Слишком короткий пароль");
             }
         }
-        if (removePhoto != null && multipartFile != null) {
-            if (removePhoto == 0 && multipartFile.getSize() < maxSizeForFile) {
+
+        if (change.getRemovePhoto() != null && change.getPhoto() != null) {
+            if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
                 imageServiceImpl.deletePhoto(user.getPhoto());
-                String pathForSetUser = imageServiceImpl.resizeImage(multipartFile);
-                user.setPhoto(pathForSetUser);
+                user.setPhoto(imageServiceImpl.resizeImage(change.getPhoto()));
             } else {
                 badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
             }
-            if (removePhoto == 1 && multipartFile.getSize() == 0) {
-                String pathForDeleteImage = user.getPhoto();
-                imageServiceImpl.deletePhoto(pathForDeleteImage);
+            if (change.getRemovePhoto() == 1 && change.getPhoto().getSize() == 0) {
+                imageServiceImpl.deletePhoto(user.getPhoto());
             }
         }
+
         userRepository.save(user);
+
         if (badResultResponse.getErrors().size() > 0) {
             return badResultResponse;
         } else {
@@ -317,10 +322,26 @@ public class UserServiceImpl implements UserService {
         return allUserInformationResponse;
     }
 
-    public User getCurrentUser(String email) {
+    private Boolean isUserExist(String email) {
+        return userRepository.getByEmail(email).isPresent() && !email.matches(correctMail);
+    }
+
+    private Boolean isNameBlank(String name) {
+        return name.isBlank();
+    }
+
+    private Boolean isPasswordValid(String password) {
+        return password.isBlank() && password.length() < minLengthPassword;
+    }
+
+    private Boolean isCaptchaSecretValid(String captcha, String captchaSecret) {
+        return captcha.isBlank() || captchaSecret.isBlank() || !captchaCodeRepository.getCaptchaCodeBySecretCode(captchaSecret).equals(captcha);
+    }
+
+    public User getCurrentUserByEmail(String email) {
         User currentUser = userRepository
                 .getByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(email));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format("user with email %s not found", email)));
         return currentUser;
     }
 }

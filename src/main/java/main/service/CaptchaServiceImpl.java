@@ -45,20 +45,25 @@ public class CaptchaServiceImpl implements CaptchaService {
     public CaptchaResponse generateCaptcha() {
         LocalDateTime localDateTime = LocalDateTime.now().minusSeconds(time);
         captchaCodeRepository.deleteCaptcha(localDateTime);
+
         Cage cage = new GCage();
         String secretCode = generateSecretCode();
         String code = cage.getTokenGenerator().next();
+
         BufferedImage bufferedImage = cage.drawImage(code);
         Image imageScaledInstance = Scalr.resize(bufferedImage, width, height);
         BufferedImage newBufferImage = new BufferedImage(width, height, 1);
         newBufferImage.getGraphics().drawImage(imageScaledInstance, 0, 0, null);
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
         try {
             ImageIO.write(newBufferImage, format, outputStream);
             outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         String encodedBytesToString = Base64.getEncoder().encodeToString(outputStream.toByteArray());
         String image = titlePath.concat(encodedBytesToString);
         CaptchaCode captchaCode = new CaptchaCode(LocalDateTime.now(), code, secretCode);

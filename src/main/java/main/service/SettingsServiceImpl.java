@@ -28,18 +28,18 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     public void saveGlobalSettings(SettingsRequest settingsRequest) {
-        boolean multi = settingsRequest.isMultiuserMode();
-        boolean post = settingsRequest.isPostPremoderation();
-        boolean stat = settingsRequest.isStatisticsIsPublic();
-        String multiUser = blnString(multi);
-        String postPre = blnString(post);
-        String statistics = blnString(stat);
+        String multiUser = blnString(settingsRequest.isMultiuserMode());
+        String postPre = blnString(settingsRequest.isPostPremoderation());
+        String statistics = blnString(settingsRequest.isStatisticsIsPublic());
+
         GlobalSettings strMulti = globalSettingsRepository.findByCode("MULTIUSER_MODE");
         GlobalSettings strPost = globalSettingsRepository.findByCode("POST_PREMODERATION");
         GlobalSettings strStat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
+
         strMulti.setValue(multiUser);
         strPost.setValue(postPre);
         strPost.setValue(statistics);
+
         globalSettingsRepository.save(strMulti);
         globalSettingsRepository.save(strPost);
         globalSettingsRepository.save(strStat);

@@ -95,6 +95,7 @@ public class PostServiceImpl implements PostService {
             log.info("Query not set. Output of all posts");
             getPosts();
         }
+
         int countPosts = postRepository.countSearchPosts(query).orElse(0);
         List<Post> listSearch = postRepository.searchPosts(offset, limit, query);
         List<PostResponse> responseList = getListPostResponse(listSearch);
@@ -116,13 +117,15 @@ public class PostServiceImpl implements PostService {
     }
 
     public ResultResponse getPostsForModeration(int offset, int limit, String status, Principal principal) {
-        User user = userService.getCurrentUser(principal.getName());
+        User user = userService.getCurrentUserByEmail(principal.getName());
         if (user == null || user.getIsModerator() == 0) {
             log.info("User isn't authorized");
         }
+
         List<Post> postSet = new ArrayList<>();
         int countPostsForModeration = 0;
         int userId = user.getId();
+
         switch (status) {
             case "new":
                 postSet.addAll(postRepository.postsForModeration(offset, limit, "NEW", userId));
@@ -137,18 +140,21 @@ public class PostServiceImpl implements PostService {
                 countPostsForModeration = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
                 break;
         }
+
         List<PostResponse> responseList = getListPostResponse(postSet);
         return new CountPostResponse(countPostsForModeration, responseList);
     }
 
     public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal) {
-        User user = userService.getCurrentUser(principal.getName());
+        User user = userService.getCurrentUserByEmail(principal.getName());
         if (user == null) {
             log.info("User isn't authorized");
         }
+
         int userId = user.getId();
         List<Post> postResponseList = new ArrayList<>();
         int countPosts = 0;
+
         switch (status) {
             case "inactive":
                 postResponseList.addAll(postRepository.listUserPostInactive(offset, limit, userId));
@@ -167,13 +173,15 @@ public class PostServiceImpl implements PostService {
                 countPosts = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
                 break;
         }
+
         List<PostResponse> responseList = getListPostResponse(postResponseList);
         return new CountPostResponse(countPosts, responseList);
     }
 
     public ResultResponse getPostsById(int id, Principal principal) {
         Post post = postRepository.getPostById(id);
-        User user = userService.getCurrentUser(principal.getName());
+        User user = userService.getCurrentUserByEmail(principal.getName());
+
         if (user == null || ((user.getIsModerator() == 0) && (post.getUsers().getId() != user.getId()))) {
             post.setViewCount(post.getViewCount() + 1);
             return getPostForUser(post);
@@ -181,37 +189,28 @@ public class PostServiceImpl implements PostService {
         return getPostForUser(post);
     }
 
-    public ResultResponse addPost(PostRequest postRequest, Principal principal) {
+
+    public ResultResponse addPost(PostRequest req, Principal principal) {
         BadResultResponse badResultResponse = new BadResultResponse();
-        int active = postRequest.getActive();
-        String title = postRequest.getTitle();
-        Set<String> tags = postRequest.getTags();
-        String text = postRequest.getText();
-        long time = postRequest.getTimestamp();
-        boolean titleOk = title.isBlank() || title.length() < minLengthTitle ||
-                title.length() > maxLengthTitle;
-        ;
-        boolean textOk = text.isBlank() || text.length() < minLengthText ||
-                text.length() > maxLengthText;
-        ;
-        User user = userService.getCurrentUser(principal.getName());
+
+        User user = userService.getCurrentUserByEmail(principal.getName());
         LocalDateTime localDateTime =
-                Instant.EPOCH.plus(time, ChronoUnit.DAYS).atZone(ZoneId.systemDefault()).toLocalDateTime();
+                Instant.EPOCH.plus(req.getTimestamp(), ChronoUnit.DAYS)
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime();
 
         List<Tag> tagSet = new ArrayList<>();
-        for (String t : tags) {
+        for (String t : req.getTags()) {
             if (!t.isBlank()) {
-                Tag tag = tagRepository.getTagByName(t);
-                tagSet.add(tag);
+                tagSet.add(tagRepository.getTagByName(t));
             }
         }
         if (localDateTime.isAfter(LocalDateTime.now())) {
             localDateTime = LocalDateTime.now();
         }
-        if (titleOk) {
+        if (isTitleOk(req.getTitle())) {
             badResultResponse.addError("title", "Заголовок слишком короткий");
         }
-        if (textOk) {
+        if (isTitleOk(req.getText())) {
             badResultResponse.addError("text", "Текст публикации слишком короткий");
         }
         if (user == null) {
@@ -222,11 +221,11 @@ public class PostServiceImpl implements PostService {
             return badResultResponse;
         } else {
             Post post = new Post();
-            post.setIsActive(active);
+            post.setIsActive(req.getActive());
             post.setUsers(user);
             post.setTime(localDateTime);
-            post.setTitle(title);
-            post.setText(text);
+            post.setTitle(req.getTitle());
+            post.setText(req.getText());
             post.setTags(tagSet);
             post.setModerationStatus(Post.ModerationStatus.NEW);
             postRepository.save(post);
@@ -234,52 +233,47 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-    public ResultResponse editPost(int idPost, PostRequest postRequest, Principal principal) {
+    public ResultResponse editPost(int idPost, PostRequest req, Principal principal) {
         BadResultResponse badResultResponse = new BadResultResponse();
+
         Post post = postRepository.getPostById(idPost);
-        boolean postNull = post == null;
-        if (postNull) {
+        if (post == null) {
             log.info("Post don't exist");
         }
-        int active = postRequest.getActive();
-        String title = postRequest.getTitle();
-        Set<String> tags = postRequest.getTags();
-        String text = postRequest.getText();
-        long time = postRequest.getTimestamp();
+
         LocalDateTime localDateTime =
-                Instant.EPOCH.plus(time, ChronoUnit.DAYS).atZone(ZoneId.systemDefault()).toLocalDateTime();
-        User user = userService.getCurrentUser(principal.getName());
-        boolean titleOk = title.isBlank() || title.length() < minLengthTitle ||
-                title.length() > maxLengthTitle;
-        boolean textOk = text.isBlank() || text.length() < minLengthText ||
-                text.length() > maxLengthText;
-        boolean userNull = user == null || user.getIsModerator() == 0;
+                Instant.EPOCH.plus(req.getTimestamp(), ChronoUnit.DAYS)
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        User user = userService.getCurrentUserByEmail(principal.getName());
+
         List<Tag> tagSet = new ArrayList<>();
-        for (String t : tags) {
+        for (String t : req.getTags()) {
             if (!t.isBlank()) {
                 Tag tag = tagRepository.getTagByName(t);
                 tagSet.add(tag);
             }
         }
+
         if (localDateTime.isAfter(LocalDateTime.now())) {
             localDateTime = LocalDateTime.now();
         }
-        if (titleOk) {
+        if (isTitleOk(req.getTitle())) {
             badResultResponse.addError("title", "Заголовок слишком короткий");
         }
-        if (textOk) {
+        if (isTextOk(req.getText())) {
             badResultResponse.addError("text", "Текст публикации слишком короткий");
         }
-        if (userNull) {
+        if (user == null || user.getIsModerator() == 0) {
             log.warn("User isn't authorized or user don't exist");
         }
 
         if (badResultResponse.getErrors().size() > 0) {
             return badResultResponse;
         } else {
-            post.setIsActive(active);
-            post.setTitle(title);
-            post.setText(text);
+            post.setIsActive(req.getActive());
+            post.setTitle(req.getTitle());
+            post.setText(req.getText());
             post.setTime(localDateTime);
             post.setTags(tagSet);
             post.setModerationStatus(user.getIsModerator() == 0 ? Post.ModerationStatus.NEW :
@@ -293,33 +287,24 @@ public class PostServiceImpl implements PostService {
         if (multipartFile.isEmpty()) {
             log.warn("Don't exist image for upload");
         }
-        User user = userService.getCurrentUser(principal.getName());
+        User user = userService.getCurrentUserByEmail(principal.getName());
         if (user == null) {
             log.warn("User isn't authorized");
         }
-        String path = imageService.uploadFile(multipartFile);
-        return new ImageUploadResponse(path);
+        return new ImageUploadResponse(imageService.uploadFile(multipartFile));
     }
 
-    public ResultResponse moderatePost(ModerationRequest moderationRequest, Principal principal) {
-        int postId = moderationRequest.getPostId();
-        String decision = moderationRequest.getDecision();
-        Post post = postRepository.getOne(postId);
-        User user = userService.getCurrentUser(principal.getName());
-        boolean postNull = post == null;
-        boolean userNull = user == null || user.getIsModerator() == 0;
-        if (postNull) {
-            log.warn("Post don't exist");
-        }
-        if (userNull) {
-            log.warn("User isn't authorized or user don't exist");
-        }
+    public ResultResponse moderatePost(ModerationRequest req, Principal principal) {
+        Post post = postRepository.getOne(req.getPostId());
+        User user = userService.getCurrentUserByEmail(principal.getName());
 
-        if (post == null || userNull) {
+        if (post == null || user == null || user.getIsModerator() == 0) {
+            log.warn("Post don't exist");
+            log.warn("User isn't authorized or user don't exist");
             return new FalseResultResponse();
         } else {
             post.setModeratorId(user.getId());
-            post.setModerationStatus(decision.equals("ACCEPTED") ? Post.ModerationStatus.ACCEPTED :
+            post.setModerationStatus(req.getDecision().equals("ACCEPTED") ? Post.ModerationStatus.ACCEPTED :
                     Post.ModerationStatus.DECLINED);
             postRepository.save(post);
             return new OkResultResponse();
@@ -328,9 +313,11 @@ public class PostServiceImpl implements PostService {
 
     public CalendarResponse postsByCalendar(Integer year) {
         int newYear = year == null ? LocalDateTime.now().getYear() : year;
+
         List<Integer> years = postRepository.yearsWithPosts();
         List<Object[]> posts = postRepository.daysCountPosts(newYear);
         Map<String, Integer> stringIntegerMap = new HashMap<>();
+
         posts.forEach(f -> {
             String datePosts = f[0].toString();
             Integer countPosts = ((BigInteger) f[1]).intValue();
@@ -345,23 +332,21 @@ public class PostServiceImpl implements PostService {
 
     private List<PostResponse> getListPostResponse(List<Post> postList) {
         List<PostResponse> postResponseList = new ArrayList<>();
+
         for (Post p : postList) {
-            int postId = p.getId();
-            int likeCount = voteRepository.getLikeByPostId(postId);
-            int dislikeCount = voteRepository.getDislikeByPostId(postId);
-            int commentCount = commentRepository.getCountCommentsByPostId(postId);
-            UserResponse userResponse = new UserResponse();
-            userResponse.setId(p.getUsers().getId());
-            userResponse.setName(p.getUsers().getName());
             postResponseList.add(new PostResponse(
-                    postId,
-                    p.getTime().atZone(ZoneId.systemDefault()).toEpochSecond(),
-                    userResponse,
+                    p.getId(),
+                    p.getTime()
+                            .atZone(ZoneId.systemDefault())
+                            .toEpochSecond(),
+                    new UserResponse(
+                            p.getUsers().getId(),
+                            p.getUsers().getName()),
                     p.getTitle(),
                     getAnnounce(p.getText()),
-                    likeCount,
-                    dislikeCount,
-                    commentCount,
+                    voteRepository.getLikeByPostId(p.getId()),
+                    voteRepository.getDislikeByPostId(p.getId()),
+                    commentRepository.getCountCommentsByPostId(p.getId()),
                     p.getViewCount()));
         }
         return postResponseList;
@@ -376,36 +361,25 @@ public class PostServiceImpl implements PostService {
     private FullInformPost getPostForUser(Post post) {
         if (post.getIsActive() != 0 || post.getModerationStatus().equals(Post.ModerationStatus.ACCEPTED)
                 || post.getTime().isBefore(LocalDateTime.now())) {
-            int idPost = post.getId();
-            long timestamp = post.getTime().atZone(ZoneId.systemDefault()).toEpochSecond();
-            boolean active = post.getIsActive() == 1;
-            UserResponse userPost = new UserResponse();
-            userPost.setId(post.getUsers().getId());
-            userPost.setName(post.getUsers().getName());
-            String title = post.getTitle();
-            String text = post.getText();
-            String announce = getAnnounce(post.getText());
-            int likeCount = voteRepository.getLikeByPostId(post.getId());
-            int dislikeCount = voteRepository.getDislikeByPostId(post.getId());
-            int commentCount = commentRepository.getCountCommentsByPostId(idPost);
-            int viewCount = post.getViewCount();
-            List<CommentResponse> comments = getListComments(post);
-            List<String> tags = getListTags(post);
             postRepository.save(post);
             return new FullInformPost(
-                    idPost,
-                    timestamp,
-                    active,
-                    userPost,
-                    title,
-                    text,
-                    announce,
-                    likeCount,
-                    dislikeCount,
-                    commentCount,
-                    viewCount,
-                    comments,
-                    tags);
+                    post.getId(),
+                    post.getTime()
+                            .atZone(ZoneId.systemDefault())
+                            .toEpochSecond(),
+                    post.getIsActive() == 1,
+                    new UserResponse(
+                            post.getUsers().getId(),
+                            post.getUsers().getName()),
+                    post.getTitle(),
+                    post.getText(),
+                    getAnnounce(post.getText()),
+                    voteRepository.getLikeByPostId(post.getId()),
+                    voteRepository.getDislikeByPostId(post.getId()),
+                    commentRepository.getCountCommentsByPostId(post.getId()),
+                    post.getViewCount(),
+                    getListComments(post),
+                    getListTags(post));
         }
         return null;
     }
@@ -414,17 +388,21 @@ public class PostServiceImpl implements PostService {
         List<CommentResponse> comments = new ArrayList<>();
         List<Comment> list = new ArrayList<>();
         list.addAll(commentRepository.getListCommentsByPostId(post.getId()));
+
         for (int i = 0; i < list.size(); i++) {
             Comment c = list.get(i);
-            CommentResponse commentResponse = new CommentResponse();
-            commentResponse.setId(c.getId());
-            commentResponse.setTimestamp(c.getTime().atZone(ZoneId.systemDefault()).toEpochSecond());
-            commentResponse.setText(c.getText());
-            UserWithPhotoResponse userWithPhotoResponse = new UserWithPhotoResponse();
-            userWithPhotoResponse.setId(c.getUsers().getId());
-            userWithPhotoResponse.setName(c.getUsers().getName());
-            userWithPhotoResponse.setPhoto(c.getUsers().getPhoto());
-            commentResponse.setUser(userWithPhotoResponse);
+            CommentResponse commentResponse =
+                    new CommentResponse(
+                            c.getId(),
+                            c.getTime()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toEpochSecond(),
+                            c.getText(),
+                            new UserWithPhotoResponse(
+                                    c.getUsers().getId(),
+                                    c.getUsers().getName(),
+                                    c.getUsers().getPhoto()));
+
             comments.add(commentResponse);
         }
         return comments;
@@ -437,5 +415,15 @@ public class PostServiceImpl implements PostService {
             tags.add(tagPost);
         }
         return tags;
+    }
+
+    private Boolean isTitleOk(String title) {
+        return title.isBlank() || title.length() < minLengthTitle ||
+                title.length() > maxLengthTitle;
+    }
+
+    private Boolean isTextOk(String text) {
+        return text.isBlank() || text.length() < minLengthText ||
+                text.length() > maxLengthText;
     }
 }

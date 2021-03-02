@@ -53,12 +53,12 @@ public class SecurityUser implements UserDetails {
         return true;
     }
 
-    public static UserDetails fromUser(User user) {
-        org.springframework.security.core.userdetails.User detailsUser =
-                new org.springframework.security.core.userdetails.User(user.getEmail(),
-                        user.getPassword(),
-                        true, true, true, true,
-                        user.getRole().getAuthorities());
-        return detailsUser;
-    }
+//    public static UserDetails fromUser(User user) {
+//        org.springframework.security.core.userdetails.User detailsUser =
+//                new org.springframework.security.core.userdetails.User(user.getEmail(),
+//                        user.getPassword(),
+//                        true, true, true, true,
+//                        user.getRole().getAuthorities());
+//        return detailsUser;
+//    }
 }

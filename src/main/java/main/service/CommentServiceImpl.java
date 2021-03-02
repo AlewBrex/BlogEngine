@@ -10,13 +10,11 @@ import main.model.User;
 import main.model.repository.CommentRepository;
 import main.model.repository.PostRepository;
 import main.service.interfaces.CommentService;
-import main.service.interfaces.UserService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
@@ -32,31 +30,26 @@ public class CommentServiceImpl implements CommentService {
     private final PostRepository postRepository;
     private final UserServiceImpl userService;
 
-    public IdResponse addComment(CommentRequest commentRequest, Principal principal) {
-        User user = userService.getCurrentUser(principal.getName());
-        int parentId = commentRequest.getParentId();
-        int postId = commentRequest.getPostId();
-        String text = commentRequest.getText();
-        boolean textOk = text.isBlank() || text.length() < minLengthComment ||
-                text.length() > maxLengthComment;
+    public IdResponse addComment(CommentRequest req, Principal principal) {
+        User user = userService.getCurrentUserByEmail(principal.getName());
+
+        boolean textOk = req.getText().isBlank() || req.getText().length() < minLengthComment ||
+                req.getText().length() > maxLengthComment;
+
         if (textOk) {
             log.warn("Short text or don't exist");
         }
-        Document textOfHtml = Jsoup.parse(text);
+
+        Document textOfHtml = Jsoup.parse(req.getText());
         String newText = textOfHtml.text();
-        Comment commentParent = commentRepository.findById(parentId).orElse(null);
-        Post post = postRepository.getPostById(postId);
+        Comment commentParent = commentRepository.findById(req.getParentId()).orElse(null);
+        Post post = postRepository.getPostById(req.getPostId());
+
         if (commentParent == null && post == null) {
             log.warn("Don't exist parent comment or post");
         }
-        Comment newComment = new Comment();
-        newComment.setParent(commentParent);
-        newComment.setPost(post);
-        newComment.setUsers(user);
-        newComment.setTime(LocalDateTime.now());
-        newComment.setText(newText);
-        commentRepository.save(newComment);
-        int id = newComment.getId();
-        return new IdResponse(id);
+        Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
+        commentRepository.save(newComment);;
+        return new IdResponse(newComment.getId());
     }
 }
