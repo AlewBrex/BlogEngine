@@ -17,10 +17,11 @@ import main.api.response.user.AllUserInformationResponse;
 import main.api.response.user.UserWithPhotoResponse;
 import main.config.MailConfig;
 import main.model.User;
-import main.model.repository.CaptchaCodeRepository;
 import main.model.repository.GlobalSettingsRepository;
 import main.model.repository.PostRepository;
 import main.model.repository.UserRepository;
+import main.service.interfaces.CaptchaService;
+import main.service.interfaces.ImageService;
 import main.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -32,13 +33,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -65,11 +66,11 @@ public class UserServiceImpl implements UserService {
     private char[] alphabetAndDigits = "ab1cd2ef3g45hij6klm7no8pq9rst0uvwxyz".toCharArray();
 
     private final MailConfig mailConfig;
+    private final ImageService imageService;
+    private final CaptchaService captchaService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final ImageServiceImpl imageServiceImpl;
     private final GlobalSettingsRepository settingsRepository;
-    private final CaptchaCodeRepository captchaCodeRepository;
     private final AuthenticationManager authenticationManager;
 
     public ResultResponse check(Principal principal) {
@@ -81,14 +82,20 @@ public class UserServiceImpl implements UserService {
     }
 
     public ResultResponse login(LoginRequest req) {
-        User userRepo = getCurrentUserByEmail(req.getEmail());
-        String checkHashPassword = generateHashPassword(req.getPassword());
-        if (userRepo.getPassword().equals(checkHashPassword)) {
+        String email = req.getEmail();
+        String password = req.getPassword();
+        User userRepo = getCurrentUserByEmail(email);
+        String hashPassReq = generateHashPassword(password);
+        String hashPassUser = userRepo.getPassword();
+        if (userRepo == null || hashPassReq.equals(hashPassUser)) {
+            log.info("User doesn't exist");
+            return new FalseResultResponse();
+        } else {
             Authentication auth = authenticationManager
                     .authenticate(
                             new UsernamePasswordAuthenticationToken(
-                                    req.getEmail(),
-                                    req.getPassword()));
+                                    email,
+                                    password));
 
             SecurityContextHolder.getContext().setAuthentication(auth);
             org.springframework.security.core.userdetails.User user =
@@ -97,53 +104,50 @@ public class UserServiceImpl implements UserService {
             User currentUser = getCurrentUserByEmail(user.getUsername());
 
             return new LoginResultResponse(getAllUserInformation(currentUser));
-        } else {
-            return new FalseResultResponse();
         }
     }
 
-    public ResultResponse logout(Principal principal) {
-        if (principal == null) {
-            log.warn("User isn't authorized");
-            return new FalseResultResponse();
-        }
-
+    public ResultResponse logout() {
         SecurityContextHolder.clearContext();
-
         return new OkResultResponse();
     }
 
-    public ResultResponse myStatistics(Principal principal) {
-        User user = getCurrentUserByEmail(principal.getName());
-        int userId = user.getId();
-        int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-        int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
-        int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
-        int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
-        LocalDateTime time = postRepository.timeMyFirstPublication(userId);
-        long timeFirstPublication = 0;
-        if (time != null) {
-            timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+    public ResultResponse myStatistics() {
+        User user = getAuthorizedUser();
+        if (user == null) {
+            return new FalseResultResponse();
+        } else {
+            int userId = user.getId();
+            int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+            int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
+            int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
+            int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
+            LocalDateTime time = postRepository.timeMyFirstPublication(userId);
+            long timeFirstPublication = 0;
+            if (time != null) {
+                timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+            }
+            log.info("Available my statistics");
+            return new StatisticsResponse(postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
         }
-        log.info("Available my statistics");
-        return new StatisticsResponse(postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
     }
 
-    public ResultResponse allStatistics(Principal principal) {
-        User user = getCurrentUserByEmail(principal.getName());
+    public ResultResponse allStatistics() {
+        User user = getAuthorizedUser();
         boolean statisticsIsPublic = settingsRepository.codeAndValue("STATISTICS_IS_PUBLIC", "NO") > 0;
-        boolean isModerator = user == null || user.getIsModerator() == 0;
-        if (statisticsIsPublic && isModerator) {
+        if (statisticsIsPublic && !user.userModerator()) {
             log.info("Banned public display of statistics or user is not a moderator");
+            return new FalseResultResponse();
+        } else {
+            int postsCount = postRepository.countPostForModStatusAccepted().orElse(0);
+            int allLikesCount = postRepository.countLikesAllPosts().orElse(0);
+            int allDislikeCount = postRepository.countDislikesAllPosts().orElse(0);
+            int allViewsCount = postRepository.countViewsAllPosts().orElse(0);
+            LocalDateTime time = postRepository.timeFirstPublication();
+            long timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+            log.info("Available ALL statistics");
+            return new StatisticsResponse(postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
         }
-        int postsCount = postRepository.countPostForModStatusAccepted().orElse(0);
-        int allLikesCount = postRepository.countLikesAllPosts().orElse(0);
-        int allDislikeCount = postRepository.countDislikesAllPosts().orElse(0);
-        int allViewsCount = postRepository.countViewsAllPosts().orElse(0);
-        LocalDateTime time = postRepository.timeFirstPublication();
-        long timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
-        log.info("Available ALL statistics");
-        return new StatisticsResponse(postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
     }
 
     public ResultResponse restorePassword(RestoreRequest req) {
@@ -171,28 +175,13 @@ public class UserServiceImpl implements UserService {
     }
 
     public ResultResponse changePassword(ChangePasswordRequest req) {
-        BadResultResponse badResultResponse = new BadResultResponse();
-
         User user = userRepository.findByCode(req.getCode())
                 .orElseThrow(
                         () -> new UsernameNotFoundException(
                                 String.format("user with code %s not found", req.getCode())));
 
-        if (req.getCode().isBlank()) {
-            badResultResponse.addError("code", "Ссылка для восстановления пароля устарела." +
-                    "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
-        }
-
-        if (isPasswordValid(req.getPassword())) {
-            badResultResponse.addError("password", "Слишком короткий пароль");
-        }
-
-        if (isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
-            badResultResponse.addError("captcha", "Код с картинки введён неверно");
-        }
-
-        if (badResultResponse.getErrors().size() > 0) {
-            return badResultResponse;
+        if (addErrorsForChangePassword(req).hasErrors()) {
+            return addErrorsForChangePassword(req);
         } else {
             user.setPassword(generateHashPassword(req.getPassword()));
             userRepository.save(user);
@@ -201,42 +190,20 @@ public class UserServiceImpl implements UserService {
     }
 
     public ResultResponse registerUser(RegisterRequest req) {
-        BadResultResponse badResultResponse = new BadResultResponse();
-
-        if (isUserExist(req.getEmail())) {
-            badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
-        }
-
-        if (isNameBlank(req.getName())) {
-            badResultResponse.addError("name", "Имя указано неверно");
-        }
-
-        if (isPasswordValid(req.getPassword())) {
-            badResultResponse.addError("password", "Слишком короткий пароль");
-        }
-
-        if (isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
-            badResultResponse.addError("captcha", "Код с картинки введён неверно");
-        }
-
-        if (badResultResponse.getErrors().size() > 0 || badResultResponse.getErrors() == null) {
-            return badResultResponse;
+        if (addErrorsForRegister(req).hasErrors()) {
+            return addErrorsForRegister(req);
         } else {
             String newHashPassword = generateHashPassword(req.getPassword());
-            User user = new User();
-            user.setName(req.getName());
-            user.setEmail(req.getEmail());
-            user.setPassword(newHashPassword);
-            user.setRegTime(LocalDateTime.now());
+            User user = new User(LocalDateTime.now(), req.getName(), req.getEmail(), newHashPassword);
             userRepository.save(user);
             return new OkResultResponse();
         }
     }
 
-    public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
+    public ResultResponse editMyProfile(ChangeDataMyProfile change) {
         BadResultResponse badResultResponse = new BadResultResponse();
 
-        User user = getCurrentUserByEmail(principal.getName());
+        User user = getAuthorizedUser();
 
         String nameUserHttpSession = user.getName();
         String emailUserHttpSession = user.getEmail();
@@ -264,19 +231,19 @@ public class UserServiceImpl implements UserService {
 
         if (change.getRemovePhoto() != null && change.getPhoto() != null) {
             if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
-                imageServiceImpl.deletePhoto(user.getPhoto());
-                user.setPhoto(imageServiceImpl.resizeImage(change.getPhoto()));
+                imageService.deletePhoto(user.getPhoto());
+                user.setPhoto(imageService.resizeImage(change.getPhoto()));
             } else {
                 badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
             }
             if (change.getRemovePhoto() == 1 && change.getPhoto().getSize() == 0) {
-                imageServiceImpl.deletePhoto(user.getPhoto());
+                imageService.deletePhoto(user.getPhoto());
             }
         }
 
         userRepository.save(user);
 
-        if (badResultResponse.getErrors().size() > 0) {
+        if (badResultResponse.hasErrors()) {
             return badResultResponse;
         } else {
             return new OkResultResponse();
@@ -322,8 +289,57 @@ public class UserServiceImpl implements UserService {
         return allUserInformationResponse;
     }
 
+    private BadResultResponse addErrorsForRegister(RegisterRequest req) {
+        BadResultResponse badResultResponse = new BadResultResponse();
+
+        if (isUserExist(req.getEmail())) {
+            badResultResponse.addError("email", "Этот e_mail уже зарегистрирован");
+        }
+
+        if (isEmailNotCorrect(req.getEmail())) {
+            badResultResponse.addError("email", "e_mail введен некорректно");
+        }
+
+        if (isNameBlank(req.getName())) {
+            badResultResponse.addError("name", "Имя указано неверно");
+        }
+
+        if (isPasswordValid(req.getPassword())) {
+            badResultResponse.addError("password", "Слишком короткий пароль");
+        }
+
+        if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
+            badResultResponse.addError("captcha", "Код с картинки введён неверно");
+        }
+
+        return new BadResultResponse(badResultResponse.getErrors());
+    }
+
+    private BadResultResponse addErrorsForChangePassword(ChangePasswordRequest req) {
+        BadResultResponse badResultResponse = new BadResultResponse();
+
+        if (req.getCode().isBlank()) {
+            badResultResponse.addError("code", "Ссылка для восстановления пароля устарела." +
+                    "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
+        }
+
+        if (isPasswordValid(req.getPassword())) {
+            badResultResponse.addError("password", "Слишком короткий пароль");
+        }
+
+        if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
+            badResultResponse.addError("captcha", "Код с картинки введён неверно");
+        }
+
+        return new BadResultResponse(badResultResponse.getErrors());
+    }
+
     private Boolean isUserExist(String email) {
-        return userRepository.getByEmail(email).isPresent() && !email.matches(correctMail);
+        return userRepository.getByEmail(email).isPresent();
+    }
+
+    private Boolean isEmailNotCorrect(String email) {
+        return !email.matches(correctMail);
     }
 
     private Boolean isNameBlank(String name) {
@@ -335,13 +351,25 @@ public class UserServiceImpl implements UserService {
     }
 
     private Boolean isCaptchaSecretValid(String captcha, String captchaSecret) {
-        return captcha.isBlank() || captchaSecret.isBlank() || !captchaCodeRepository.getCaptchaCodeBySecretCode(captchaSecret).equals(captcha);
+        return captcha.isBlank() || captchaSecret.isBlank() ||
+                captchaService.checkCaptcha(captcha, captchaSecret);
     }
 
+    @Override
     public User getCurrentUserByEmail(String email) {
-        User currentUser = userRepository
-                .getByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(String.format("user with email %s not found", email)));
-        return currentUser;
+        Optional<User> currentUser = userRepository.getByEmail(email);
+        if (currentUser.isEmpty()) {
+            throw new UsernameNotFoundException(
+                    String.format("user with email %s not found", email));
+        } else {
+            return currentUser.get();
+        }
+    }
+
+    public User getAuthorizedUser() {
+        org.springframework.security.core.userdetails.User userDetails =
+                (org.springframework.security.core.userdetails.User)
+                        SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return getCurrentUserByEmail(userDetails.getUsername());
     }
 }

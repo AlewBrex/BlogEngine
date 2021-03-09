@@ -24,7 +24,9 @@ import main.model.repository.CommentRepository;
 import main.model.repository.PostRepository;
 import main.model.repository.TagRepository;
 import main.model.repository.VoteRepository;
+import main.service.interfaces.ImageService;
 import main.service.interfaces.PostService;
+import main.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,7 +37,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Log4j2
 @Service
@@ -57,8 +62,8 @@ public class PostServiceImpl implements PostService {
     private final TagRepository tagRepository;
     private final VoteRepository voteRepository;
     private final CommentRepository commentRepository;
-    private final UserServiceImpl userService;
-    private final ImageServiceImpl imageService;
+    private final UserService userService;
+    private final ImageService imageService;
 
     public ResultResponse getPosts() {
         List<Post> list = postRepository.modeRecentAll();
@@ -178,9 +183,9 @@ public class PostServiceImpl implements PostService {
         return new CountPostResponse(countPosts, responseList);
     }
 
-    public ResultResponse getPostsById(int id, Principal principal) {
+    public ResultResponse getPostsById(int id) {
         Post post = postRepository.getPostById(id);
-        User user = userService.getCurrentUserByEmail(principal.getName());
+        User user = userService.getAuthorizedUser();
 
         if (user == null || ((user.getIsModerator() == 0) && (post.getUsers().getId() != user.getId()))) {
             post.setViewCount(post.getViewCount() + 1);

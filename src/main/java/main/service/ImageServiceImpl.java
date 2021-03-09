@@ -68,6 +68,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @SneakyThrows
+    @Override
     public String resizeImage(MultipartFile multipartFile) {
         String pathImage = generateName();
         String pathUpload = pathResizeImage;
@@ -83,6 +84,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @SneakyThrows
+    @Override
     public String uploadFile(MultipartFile multipartFile) {
         String pathImage = generateName();
         String pathDirectory = generateDirectory();
@@ -96,6 +98,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @SneakyThrows
+    @Override
     public void deletePhoto(String path) {
         if (!path.isBlank()) {
             Files.deleteIfExists(Path.of(path));

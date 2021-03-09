@@ -60,8 +60,8 @@ public class ApiAuthController {
     }
 
     @GetMapping(value = "logout")
-    public ResponseEntity logout(Principal principal) {
+    public ResponseEntity logout() {
         log.info("Get request api/auth/logout");
-        return new ResponseEntity<>(userServiceImpl.logout(principal), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.logout(), HttpStatus.OK);
     }
 }

@@ -1,4 +1,4 @@
-package main.model;
+package main.model.enums;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 

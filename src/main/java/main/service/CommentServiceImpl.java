@@ -10,6 +10,7 @@ import main.model.User;
 import main.model.repository.CommentRepository;
 import main.model.repository.PostRepository;
 import main.service.interfaces.CommentService;
+import main.service.interfaces.UserService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +27,10 @@ public class CommentServiceImpl implements CommentService {
     private int minLengthComment;
     @Value("${comment.max_length}")
     private int maxLengthComment;
+
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     public IdResponse addComment(CommentRequest req, Principal principal) {
         User user = userService.getCurrentUserByEmail(principal.getName());

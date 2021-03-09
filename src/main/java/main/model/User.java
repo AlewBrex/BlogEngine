@@ -1,6 +1,7 @@
 package main.model;
 
 import lombok.*;
+import main.model.enums.Role;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
