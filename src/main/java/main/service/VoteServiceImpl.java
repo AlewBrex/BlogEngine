@@ -11,6 +11,7 @@ import main.model.User;
 import main.model.Vote;
 import main.model.repository.PostRepository;
 import main.model.repository.VoteRepository;
+import main.service.interfaces.UserService;
 import main.service.interfaces.VoteService;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,7 @@ public class VoteServiceImpl implements VoteService {
 
     private final VoteRepository voteRepository;
     private final PostRepository postRepository;
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
 
     public ResultResponse likePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
         boolean like = setVote(likeDislikeRequest, 1, principal);
@@ -39,7 +40,7 @@ public class VoteServiceImpl implements VoteService {
     private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal) {
         int id = likeDislikeRequest.getPostId();
         Post post = postRepository.getPostById(id);
-        User user = userServiceImpl.getCurrentUserByEmail(principal.getName());
+        User user = userService.getCurrentUserByEmail(principal.getName());
         if (user == null) {
             log.error("User isn't authorized");
         }

@@ -8,6 +8,7 @@ import main.service.PostServiceImpl;
 import main.service.VoteServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -88,9 +89,9 @@ public class ApiPostController {
     }
 
     @GetMapping(value = "{id}")
-    public ResponseEntity<?> getPostId(@PathVariable int id, Principal principal) {
+    public ResponseEntity<?> getPostId(@PathVariable int id) {
         log.info("Get post by id");
-        return new ResponseEntity<>(postServiceImpl.getPostsById(id, principal), HttpStatus.OK);
+        return new ResponseEntity<>(postServiceImpl.getPostsById(id), HttpStatus.OK);
     }
 
     @PostMapping(value = "")

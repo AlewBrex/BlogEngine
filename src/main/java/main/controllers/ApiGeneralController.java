@@ -75,28 +75,26 @@ public class ApiGeneralController {
     }
 
     @PostMapping(value = "profile/my")
-    public ResponseEntity<?> editProfile(@RequestBody ChangeDataMyProfile changeWithPassword,
-                                         Principal principal) {
+    public ResponseEntity<?> editProfile(@RequestBody ChangeDataMyProfile changeWithPassword) {
         log.info("Получен POST запрос api/profile/my");
-        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword, principal), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword), HttpStatus.OK);
     }
 
     @PostMapping(value = "profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> editProfileAndMultipartFile(@ModelAttribute ChangeDataMyProfile changeWithPassword,
-                                                         Principal principal) {
+    public ResponseEntity<?> editProfileAndMultipartFile(@ModelAttribute ChangeDataMyProfile changeWithPassword) {
         log.info("Получен POST запрос api/profile/my с изменением фотографии пользователя");
-        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword, principal), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword), HttpStatus.OK);
     }
 
     @GetMapping(value = "statistics/my")
-    public ResponseEntity<?> getMeStatistic(Principal principal) {
+    public ResponseEntity<?> getMeStatistic() {
         log.info("Получен GET запрос api/statistics/my");
-        return new ResponseEntity<>(userServiceImpl.myStatistics(principal), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.myStatistics(), HttpStatus.OK);
     }
 
     @GetMapping(value = "statistics/all")
-    public ResponseEntity<?> getAllStatistic(Principal principal) {
+    public ResponseEntity<?> getAllStatistic() {
         log.info("Получен GET запрос api/statistics/all");
-        return new ResponseEntity<>(userServiceImpl.allStatistics(principal), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.allStatistics(), HttpStatus.OK);
     }
 }

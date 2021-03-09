@@ -1,15 +1,16 @@
 package main.api.response.result;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import main.api.response.ResultResponse;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
+@RequiredArgsConstructor
 public class BadResultResponse implements ResultResponse {
+
     private boolean result;
     private Map<String, String> errors = new HashMap<>();
 
@@ -18,11 +19,11 @@ public class BadResultResponse implements ResultResponse {
         this.errors = errors;
     }
 
-    public Map<String, String> getErrors() {
-        return errors;
-    }
-
     public void addError(String name, String description) {
         errors.put(name, description);
+    }
+
+    public Boolean hasErrors() {
+        return getErrors().size() > 0;
     }
 }

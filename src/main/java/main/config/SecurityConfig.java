@@ -33,14 +33,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/**").permitAll()
                     .anyRequest().authenticated()
                 .and()
-                    .formLogin().permitAll()
-                    .defaultSuccessUrl("/")
-                    .permitAll()
-                .and()
-                    .logout().permitAll()
-                    .logoutSuccessUrl("/")
-                    .and()
-                    .httpBasic();
+                    .formLogin().disable()
+                    .httpBasic().disable();
     }
 
     @Bean
