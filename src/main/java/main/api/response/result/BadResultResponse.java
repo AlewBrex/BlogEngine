@@ -19,6 +19,11 @@ public class BadResultResponse implements ResultResponse {
         this.errors = errors;
     }
 
+    public BadResultResponse(String object, String message) {
+        this.result = false;
+        errors.put(object, message);
+    }
+
     public void addError(String name, String description) {
         errors.put(name, description);
     }

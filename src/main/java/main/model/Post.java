@@ -71,6 +71,10 @@ public class Post {
         this.tags = tags;
     }
 
+    public Boolean activePost() {
+        return isActive == 1;
+    }
+
     public enum ModerationStatus {
         NEW,
         ACCEPTED,

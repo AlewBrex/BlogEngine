@@ -6,10 +6,12 @@ import main.api.request.LoginRequest;
 import main.api.request.RegisterRequest;
 import main.api.request.RestoreRequest;
 import main.api.request.change.ChangePasswordRequest;
+import main.exception.ContentNotAllowedException;
 import main.service.CaptchaServiceImpl;
 import main.service.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -24,7 +26,7 @@ public class ApiAuthController {
     private final CaptchaServiceImpl captchaService;
 
     @PostMapping(value = "login")
-    public ResponseEntity login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity login(@RequestBody LoginRequest loginRequest) throws UsernameNotFoundException {
         log.info("Get request api/auth/login");
         return new ResponseEntity<>(userServiceImpl.login(loginRequest), HttpStatus.OK);
     }
@@ -48,7 +50,7 @@ public class ApiAuthController {
     }
 
     @PostMapping(value = "register")
-    public ResponseEntity register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity register(@RequestBody RegisterRequest registerRequest) throws ContentNotAllowedException {
         log.info("Get request api/auth/register");
         return new ResponseEntity<>(userServiceImpl.registerUser(registerRequest), HttpStatus.OK);
     }

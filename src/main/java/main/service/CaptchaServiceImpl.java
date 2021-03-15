@@ -58,7 +58,7 @@ public class CaptchaServiceImpl implements CaptchaService {
         CaptchaCode captchaCode = new CaptchaCode(LocalDateTime.now(), code, encodedBytesToString);
         captchaCodeRepository.save(captchaCode);
 
-        String image = titlePath + "," + Base64.getEncoder().encodeToString(getImageToByte(newBufferImage, format));
+        String image = titlePath + ", " + Base64.getEncoder().encodeToString(getImageToByte(newBufferImage, format));
 
         return new CaptchaResponse(encodedBytesToString, image);
     }
