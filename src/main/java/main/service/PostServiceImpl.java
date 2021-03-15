@@ -20,14 +20,12 @@ import main.model.Comment;
 import main.model.Post;
 import main.model.Tag;
 import main.model.User;
-import main.model.repository.CommentRepository;
-import main.model.repository.PostRepository;
-import main.model.repository.TagRepository;
-import main.model.repository.VoteRepository;
+import main.model.repository.*;
 import main.service.interfaces.ImageService;
 import main.service.interfaces.PostService;
 import main.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,10 +35,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -62,6 +57,7 @@ public class PostServiceImpl implements PostService {
     private final TagRepository tagRepository;
     private final VoteRepository voteRepository;
     private final CommentRepository commentRepository;
+    private final GlobalSettingsRepository settingsRepository;
     private final UserService userService;
     private final ImageService imageService;
 
@@ -123,7 +119,7 @@ public class PostServiceImpl implements PostService {
 
     public ResultResponse getPostsForModeration(int offset, int limit, String status, Principal principal) {
         User user = userService.getCurrentUserByEmail(principal.getName());
-        if (user == null || user.getIsModerator() == 0) {
+        if (user == null || !user.userModerator()) {
             log.info("User isn't authorized");
         }
 
@@ -150,12 +146,16 @@ public class PostServiceImpl implements PostService {
         return new CountPostResponse(countPostsForModeration, responseList);
     }
 
-    public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal) {
-        User user = userService.getCurrentUserByEmail(principal.getName());
-        if (user == null) {
-            log.info("User isn't authorized");
+    public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal) throws UsernameNotFoundException{
+        Optional<User> optionalUser = null;
+        if (principal != null) {
+            optionalUser = Optional.ofNullable(userService.getCurrentUserByEmail(principal.getName()));
         }
-
+        if (!optionalUser.isPresent()) {
+            log.info("Пользователя не найден. Попробуйте зарегистрироваться.");
+            throw new UsernameNotFoundException("Пользователь не зарегистрирован.");
+        }
+        User user = optionalUser.get();
         int userId = user.getId();
         List<Post> postResponseList = new ArrayList<>();
         int countPosts = 0;
@@ -187,13 +187,12 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.getPostById(id);
         User user = userService.getAuthorizedUser();
 
-        if (user == null || ((user.getIsModerator() == 0) && (post.getUsers().getId() != user.getId()))) {
+        if (user == null || ((!user.userModerator()) &&
+                (post.getUsers().getId() != user.getId()))) {
             post.setViewCount(post.getViewCount() + 1);
-            return getPostForUser(post);
         }
         return getPostForUser(post);
     }
-
 
     public ResultResponse addPost(PostRequest req, Principal principal) {
         BadResultResponse badResultResponse = new BadResultResponse();
@@ -222,7 +221,7 @@ public class PostServiceImpl implements PostService {
             log.warn("User isn't authorized or user don't exist");
         }
 
-        if (badResultResponse.getErrors().size() > 0) {
+        if (badResultResponse.hasErrors()) {
             return badResultResponse;
         } else {
             Post post = new Post();
@@ -269,11 +268,11 @@ public class PostServiceImpl implements PostService {
         if (isTextOk(req.getText())) {
             badResultResponse.addError("text", "Текст публикации слишком короткий");
         }
-        if (user == null || user.getIsModerator() == 0) {
+        if (user == null || !user.userModerator()) {
             log.warn("User isn't authorized or user don't exist");
         }
 
-        if (badResultResponse.getErrors().size() > 0) {
+        if (badResultResponse.hasErrors()) {
             return badResultResponse;
         } else {
             post.setIsActive(req.getActive());
@@ -281,8 +280,8 @@ public class PostServiceImpl implements PostService {
             post.setText(req.getText());
             post.setTime(localDateTime);
             post.setTags(tagSet);
-            post.setModerationStatus(user.getIsModerator() == 0 ? Post.ModerationStatus.NEW :
-                    Post.ModerationStatus.ACCEPTED);
+            post.setModerationStatus(user.userModerator() ? Post.ModerationStatus.ACCEPTED :
+                    Post.ModerationStatus.NEW);
             postRepository.save(post);
             return new OkResultResponse();
         }
@@ -303,7 +302,7 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.getOne(req.getPostId());
         User user = userService.getCurrentUserByEmail(principal.getName());
 
-        if (post == null || user == null || user.getIsModerator() == 0) {
+        if (post == null || user == null || !user.userModerator()) {
             log.warn("Post don't exist");
             log.warn("User isn't authorized or user don't exist");
             return new FalseResultResponse();
@@ -364,15 +363,14 @@ public class PostServiceImpl implements PostService {
     }
 
     private FullInformPost getPostForUser(Post post) {
-        if (post.getIsActive() != 0 || post.getModerationStatus().equals(Post.ModerationStatus.ACCEPTED)
+        if (post.activePost() || post.getModerationStatus().equals(Post.ModerationStatus.ACCEPTED)
                 || post.getTime().isBefore(LocalDateTime.now())) {
             postRepository.save(post);
             return new FullInformPost(
                     post.getId(),
                     post.getTime()
-                            .atZone(ZoneId.systemDefault())
-                            .toEpochSecond(),
-                    post.getIsActive() == 1,
+                            .atZone(ZoneId.systemDefault()).toEpochSecond(),
+                    post.activePost(),
                     new UserResponse(
                             post.getUsers().getId(),
                             post.getUsers().getName()),

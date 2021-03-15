@@ -7,6 +7,7 @@ import main.api.request.ModerationRequest;
 import main.api.request.SettingsRequest;
 import main.api.request.change.ChangeDataMyProfile;
 import main.api.response.InitResponse;
+import main.exception.ContentNotAllowedException;
 import main.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,8 +43,8 @@ public class ApiGeneralController {
     }
 
     @PutMapping(value = "settings")
-    public ResponseEntity<?> saveSettings(@RequestBody SettingsRequest settingsRequest) {
-        settingsServiceImpl.saveGlobalSettings(settingsRequest);
+    public ResponseEntity<?> saveSettings(@RequestBody SettingsRequest settingsRequest, Principal principal) {
+        settingsServiceImpl.saveGlobalSettings(settingsRequest, principal);
         log.info("Получен PUT запрос api/settings");
         return new ResponseEntity<>(settingsRequest, HttpStatus.OK);
     }
@@ -56,7 +57,7 @@ public class ApiGeneralController {
 
     @PostMapping(value = "comment")
     public ResponseEntity<?> addComment(@RequestBody CommentRequest commentRequest,
-                                        Principal principal) {
+                                        Principal principal) throws ContentNotAllowedException {
         log.info("Получен POST запрос api/comment");
         return new ResponseEntity<>(commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
     }
@@ -87,14 +88,14 @@ public class ApiGeneralController {
     }
 
     @GetMapping(value = "statistics/my")
-    public ResponseEntity<?> getMeStatistic() {
+    public ResponseEntity<?> getMeStatistic(Principal principal) {
         log.info("Получен GET запрос api/statistics/my");
-        return new ResponseEntity<>(userServiceImpl.myStatistics(), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.myStatistics(principal), HttpStatus.OK);
     }
 
     @GetMapping(value = "statistics/all")
-    public ResponseEntity<?> getAllStatistic() {
+    public ResponseEntity<?> getAllStatistic(Principal principal) {
         log.info("Получен GET запрос api/statistics/all");
-        return new ResponseEntity<>(userServiceImpl.allStatistics(), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.allStatistics(principal), HttpStatus.OK);
     }
 }

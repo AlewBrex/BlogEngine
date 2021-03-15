@@ -33,8 +33,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/**").permitAll()
                     .anyRequest().authenticated()
                 .and()
-                    .formLogin().disable()
-                    .httpBasic().disable();
+                .exceptionHandling().disable()
+                .formLogin().disable()
+                .httpBasic().disable();
     }
 
     @Bean

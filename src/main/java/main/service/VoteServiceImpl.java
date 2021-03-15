@@ -13,6 +13,7 @@ import main.model.repository.PostRepository;
 import main.model.repository.VoteRepository;
 import main.service.interfaces.UserService;
 import main.service.interfaces.VoteService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -37,12 +38,13 @@ public class VoteServiceImpl implements VoteService {
         return dislike ? new OkResultResponse() : new FalseResultResponse();
     }
 
-    private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal) {
+    private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal) throws UsernameNotFoundException {
         int id = likeDislikeRequest.getPostId();
         Post post = postRepository.getPostById(id);
         User user = userService.getCurrentUserByEmail(principal.getName());
         if (user == null) {
             log.error("User isn't authorized");
+            throw new UsernameNotFoundException("Вы не зарегистрированы");
         }
         Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
 

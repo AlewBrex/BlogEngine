@@ -5,49 +5,48 @@ import lombok.extern.log4j.Log4j2;
 import main.api.request.SettingsRequest;
 import main.api.response.SettingsResponse;
 import main.model.GlobalSettings;
+import main.model.User;
 import main.model.repository.GlobalSettingsRepository;
+import main.model.repository.UserRepository;
 import main.service.interfaces.SettingsService;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.security.Principal;
+import java.util.Optional;
 
 @Log4j2
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SettingsServiceImpl implements SettingsService {
 
-    private final GlobalSettingsRepository globalSettingsRepository;
+    private final GlobalSettingsRepository repo;
+    private final UserRepository userRepo;
 
     public SettingsResponse getSettings() {
-        GlobalSettings multi = globalSettingsRepository.findByCode("MULTIUSER_MODE");
-        GlobalSettings post = globalSettingsRepository.findByCode("POST_PREMODERATION");
-        GlobalSettings stat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
         log.info("Получены настройки");
         return new SettingsResponse(
-                strgBoolean(multi.getValue()),
-                strgBoolean(post.getValue()),
-                strgBoolean(stat.getValue()));
+                repo.getMultiUser(),
+                repo.getPostPremod(),
+                repo.getStatIsPub());
     }
 
-    public void saveGlobalSettings(SettingsRequest settingsRequest) {
-        String multiUser = blnString(settingsRequest.isMultiuserMode());
-        String postPre = blnString(settingsRequest.isPostPremoderation());
-        String statistics = blnString(settingsRequest.isStatisticsIsPublic());
-
-        GlobalSettings strMulti = globalSettingsRepository.findByCode("MULTIUSER_MODE");
-        GlobalSettings strPost = globalSettingsRepository.findByCode("POST_PREMODERATION");
-        GlobalSettings strStat = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
-
-        strMulti.setValue(multiUser);
-        strPost.setValue(postPre);
-        strPost.setValue(statistics);
-
-        globalSettingsRepository.save(strMulti);
-        globalSettingsRepository.save(strPost);
-        globalSettingsRepository.save(strStat);
-        log.info("Установлены новые настройки");
-    }
-
-    private boolean strgBoolean(String code) {
-        return code.equals("YES");
+    public void saveGlobalSettings(SettingsRequest req, Principal principal) {
+        Optional<User> optionalUser = null;
+        if (principal != null) {
+            optionalUser = userRepo.getByEmail(principal.getName());
+        }
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (user.userModerator()) {
+                repo.dropSettings();
+                repo.setMultiUser(blnString(req.isMultiuserMode()));
+                repo.setPostPremod(blnString(req.isPostPremoderation()));
+                repo.setStatIsPub(blnString(req.isStatisticsIsPublic()));
+                log.info("Установлены новые настройки");
+            }
+        }
     }
 
     private String blnString(boolean bln) {
