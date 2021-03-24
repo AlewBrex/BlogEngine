@@ -9,12 +9,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @Data
 public class MvcConfig implements WebMvcConfigurer {
-    @Value("${user.upload_file.directory}")
-    private String pathLoad;
+  @Value("${user.upload_file.directory}")
+  private String pathLoad;
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler(pathLoad + "/**")
-                .addResourceLocations("file:" + pathLoad + "/");
-    }
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    registry.addResourceHandler(pathLoad + "/**").addResourceLocations("file:" + pathLoad + "/");
+  }
 }

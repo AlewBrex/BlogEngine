@@ -1,8 +1,11 @@
 package main.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+public class WrongParameterException extends RuntimeException {
+  public WrongParameterException() {
+    super();
+  }
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class WrongParameterException extends  Exception {
+  public WrongParameterException(String message) {
+    super(message);
+  }
 }

@@ -2,6 +2,7 @@ package main.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import main.Main;
 import main.api.request.LoginRequest;
 import main.api.request.RegisterRequest;
 import main.api.request.RestoreRequest;
@@ -17,6 +18,8 @@ import main.api.response.user.AllUserInformationResponse;
 import main.api.response.user.UserWithPhotoResponse;
 import main.config.MailConfig;
 import main.exception.ContentNotAllowedException;
+import main.exception.LoginUserWrongCredentialsException;
+import main.exception.WrongParameterException;
 import main.model.User;
 import main.model.repository.GlobalSettingsRepository;
 import main.model.repository.PostRepository;
@@ -24,6 +27,8 @@ import main.model.repository.UserRepository;
 import main.service.interfaces.CaptchaService;
 import main.service.interfaces.ImageService;
 import main.service.interfaces.UserService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -47,333 +52,337 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Value("${user.email.valid_reg}")
-    private String correctMail;
-    @Value("${user.password.min_length}")
-    private int minLengthPassword;
-    @Value("${user.password.length_key}")
-    private int lengthHashKey;
-    @Value("${user.password.subject_string}")
-    private String subjectString;
-    @Value("${user.password.concat_string}")
-    private String contactStringForMessage;
-    @Value("${user.password.algorithm_string}")
-    private String algorithmString;
-    @Value("${user.upload_file.size}")
-    private int maxSizeForFile;
+  private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-    private char[] alphabetAndDigits = "ab1cd2ef3g45hij6klm7no8pq9rst0uvwxyz".toCharArray();
+  @Value("${user.email.valid_reg}")
+  private String correctMail;
 
-    private final MailConfig mailConfig;
-    private final ImageService imageService;
-    private final CaptchaService captchaService;
-    private final UserRepository userRepository;
-    private final PostRepository postRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final GlobalSettingsRepository settingsRepository;
-    private final AuthenticationManager authenticationManager;
+  @Value("${user.password.min_length}")
+  private int minLengthPassword;
 
-    public ResultResponse check(Principal principal) {
-        if (principal == null) {
-            return new FalseResultResponse();
-        }
-        User user = getCurrentUserByEmail(principal.getName());
-        return new LoginResultResponse(getAllUserInformation(user));
+  @Value("${user.password.length_key}")
+  private int lengthHashKey;
+
+  @Value("${user.password.subject_string}")
+  private String subjectString;
+
+  @Value("${user.password.concat_string}")
+  private String contactStringForMessage;
+
+  @Value("${user.password.algorithm_string}")
+  private String algorithmString;
+
+  @Value("${user.upload_file.size}")
+  private int maxSizeForFile;
+
+  private char[] alphabetAndDigits = "ab1cd2ef3g45hij6klm7no8pq9rst0uvwxyz".toCharArray();
+
+  private final MailConfig mailConfig;
+  private final ImageService imageService;
+  private final CaptchaService captchaService;
+  private final UserRepository userRepository;
+  private final PostRepository postRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final GlobalSettingsRepository settingsRepository;
+  private final AuthenticationManager authenticationManager;
+
+  public ResultResponse check(Principal principal) {
+    if (principal == null) {
+      return new FalseResultResponse();
+    }
+    User user = getCurrentUserByEmail(principal.getName());
+    return new LoginResultResponse(getAllUserInformation(user));
+  }
+
+  public ResultResponse login(LoginRequest req)
+      throws IllegalStateException, LoginUserWrongCredentialsException {
+    String email = req.getEmail();
+    String password = req.getPassword();
+    User userRepo =
+        userRepository
+            .getByEmail(req.getEmail())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+
+    if (!passwordEncoder.matches(userRepo.getPassword(), password)) {
+      log.info("password not correct");
+      throw new LoginUserWrongCredentialsException();
     }
 
-    public ResultResponse login(LoginRequest req) throws  UsernameNotFoundException {
-        String email = req.getEmail();
-        String password = req.getPassword();
-        User userRepo = getCurrentUserByEmail(email);
-        if (userRepo == null || passwordEncoder.matches(userRepo.getPassword(), password)) {
-            log.info("User doesn't exist");
-            throw new UsernameNotFoundException("Пользователь не зарегистрирован.");
-        }
+    Authentication auth =
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password));
 
-        Authentication auth = authenticationManager
-                .authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                password));
+    SecurityContextHolder.getContext().setAuthentication(auth);
+    org.springframework.security.core.userdetails.User user =
+        (org.springframework.security.core.userdetails.User) auth.getPrincipal();
 
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        org.springframework.security.core.userdetails.User user =
-                (org.springframework.security.core.userdetails.User) auth.getPrincipal();
+    User currentUser = getCurrentUserByEmail(user.getUsername());
 
-        User currentUser = getCurrentUserByEmail(user.getUsername());
+    return new LoginResultResponse(getAllUserInformation(currentUser));
+  }
 
-        return new LoginResultResponse(getAllUserInformation(currentUser));
+  public ResultResponse logout() {
+    SecurityContextHolder.clearContext();
+    return new OkResultResponse();
+  }
+
+  public ResultResponse myStatistics(Principal principal)
+      throws LoginUserWrongCredentialsException, IllegalStateException {
+    User user =
+        userRepository
+            .getByEmail(principal.getName())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+
+    int userId = user.getId();
+    int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+    int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
+    int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
+    int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
+
+    LocalDateTime time = postRepository.timeMyFirstPublication(userId);
+    long timeFirstPublication = 0;
+
+    if (time != null) {
+      timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
     }
 
-    public ResultResponse logout() {
-        SecurityContextHolder.clearContext();
-        return new OkResultResponse();
+    LOGGER.info("Available my statistics");
+    return new StatisticsResponse(
+        postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
+  }
+
+  public ResultResponse allStatistics(Principal principal) throws LoginUserWrongCredentialsException, WrongParameterException {
+    String emailLoggedUser = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user =
+        userRepository
+            .getByEmail(emailLoggedUser)
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+    System.out.println(user.getEmail());
+
+    boolean statisticsIsPublic = !settingsRepository.getStatIsPub();
+    if (statisticsIsPublic && !user.userModerator() && user!= null) {
+      LOGGER.info("Banned public display of statistics");
+      throw new WrongParameterException();
+    }
+    int postsCount = postRepository.countPostForModStatusAccepted().orElse(0);
+    int allLikesCount = postRepository.countLikesAllPosts().orElse(0);
+    int allDislikeCount = postRepository.countDislikesAllPosts().orElse(0);
+    int allViewsCount = postRepository.countViewsAllPosts().orElse(0);
+    LocalDateTime time = postRepository.timeFirstPublication();
+    long timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+    LOGGER.info("Available ALL statistics");
+    return new StatisticsResponse(
+        postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
+  }
+
+  public ResultResponse restorePassword(RestoreRequest req)
+      throws LoginUserWrongCredentialsException {
+    User user =
+        userRepository
+            .getByEmail(req.getEmail())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+    if (isEmailNotCorrect(req.getEmail())) {
+      LOGGER.info("Incorrect email");
+      return new FalseResultResponse();
     }
 
-    public ResultResponse myStatistics(Principal principal) throws UsernameNotFoundException{
-        Optional<User> optionalUser = null;
-        if (principal != null) {
-            optionalUser = userRepository.getByEmail(principal.getName());
-        }
-        if (!optionalUser.isPresent()) {
-            log.info("Пользователя не найден. Попробуйте зарегистрироваться.");
-            throw new UsernameNotFoundException("Пользователь не зарегистрирован.");
-        }
+    String codeForRecovery = generateHashCode();
+    user.setCode(codeForRecovery);
+    userRepository.save(user);
 
-        User user = optionalUser.get();
+    SimpleMailMessage mimeMessage = new SimpleMailMessage();
+    mimeMessage.setTo(req.getEmail());
+    mimeMessage.setSubject(subjectString);
+    mimeMessage.setText(contactStringForMessage + codeForRecovery);
+    JavaMailSender javaMailSender = mailConfig.javaMailSender();
+    javaMailSender.send(mimeMessage);
+    LOGGER.info("Sent message with recovery code");
+    return new OkResultResponse();
+  }
 
-        int userId = user.getId();
-        int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-        int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
-        int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
-        int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
+  public ResultResponse changePassword(ChangePasswordRequest req) throws UsernameNotFoundException {
+    User user =
+        userRepository
+            .findByCode(req.getCode())
+            .orElseThrow(
+                () ->
+                    new UsernameNotFoundException(
+                        String.format("user with code %s not found", req.getCode())));
 
-        LocalDateTime time = postRepository.timeMyFirstPublication(userId);
-        long timeFirstPublication = 0;
-
-        if (time != null) {
-            timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
-        }
-
-        log.info("Available my statistics");
-        return new StatisticsResponse(postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
+    if (addErrorsForChangePassword(req).hasErrors()) {
+      return addErrorsForChangePassword(req);
     }
 
-    public ResultResponse allStatistics(Principal principal) throws UsernameNotFoundException{
-        Optional<User> optionalUser = null;
-        if (principal != null) {
-            optionalUser = userRepository.getByEmail(principal.getName());
-        }
-        if (!optionalUser.isPresent()) {
-            log.info("Пользователя не найден. Попробуйте зарегистрироваться.");
-            throw new UsernameNotFoundException("Пользователь не зарегистрирован.");
-        }
-        User user = optionalUser.get();
+    user.setPassword(passwordEncoder.encode(req.getPassword()));
+    userRepository.save(user);
+    return new OkResultResponse();
+  }
 
-        boolean statisticsIsPublic = !settingsRepository.getStatIsPub();
-        if (statisticsIsPublic && !user.userModerator()) {
-            log.info("Banned public display of statistics");
-            throw new UsernameNotFoundException("Вы не являетесь модератором!");
-        }
-        int postsCount = postRepository.countPostForModStatusAccepted().orElse(0);
-        int allLikesCount = postRepository.countLikesAllPosts().orElse(0);
-        int allDislikeCount = postRepository.countDislikesAllPosts().orElse(0);
-        int allViewsCount = postRepository.countViewsAllPosts().orElse(0);
-        LocalDateTime time = postRepository.timeFirstPublication();
-        long timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
-        log.info("Available ALL statistics");
-        return new StatisticsResponse(postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
+  public ResultResponse registerUser(RegisterRequest req) throws ContentNotAllowedException {
+    if (!settingsRepository.getMultiUser()) {
+      throw new ContentNotAllowedException().createWith("регистрация", "Регистрация запрещена!");
+    }
+    if (addErrorsForRegister(req).hasErrors()) {
+      return addErrorsForRegister(req);
     }
 
-    public ResultResponse restorePassword(RestoreRequest req) {
-        User user = getCurrentUserByEmail(req.getEmail());
+    String newHashPassword = passwordEncoder.encode(req.getPassword());
+    User user = new User(LocalDateTime.now(), req.getName(), req.getEmail(), newHashPassword);
+    userRepository.save(user);
+    return new OkResultResponse();
+  }
 
-        boolean inCorrectMail = !req.getEmail().matches(correctMail);
-        boolean userNotExist = user == null;
+  public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
+    BadResultResponse badResultResponse = new BadResultResponse();
 
-        if (inCorrectMail || userNotExist) {
-            log.info("Incorrect email or user don't exist");
-            return new FalseResultResponse();
-        }
+    User user =
+        userRepository
+            .getByEmail(principal.getName())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
 
-        String codeForRecovery = generateHashCode();
-        user.setCode(codeForRecovery);
-        userRepository.save(user);
+    String nameUserHttpSession = user.getName();
+    String emailUserHttpSession = user.getEmail();
 
-        SimpleMailMessage mimeMessage = new SimpleMailMessage();
-        mimeMessage.setTo(req.getEmail());
-        mimeMessage.setSubject(subjectString);
-        mimeMessage.setText(contactStringForMessage + codeForRecovery);
-        JavaMailSender javaMailSender = mailConfig.javaMailSender();
-        javaMailSender.send(mimeMessage);
-        log.info("Sent message with recovery code");
-        return new OkResultResponse();
+    boolean existEmail = userRepository.existEmailOrNot(emailUserHttpSession) != null;
+    boolean notEqualsEmail = !change.getEmail().equals(emailUserHttpSession);
+    boolean nameTrue = !change.getName().isBlank() && !change.getName().equals(nameUserHttpSession);
+
+    if (nameTrue && !isEmailNotCorrect(change.getEmail()) && existEmail && notEqualsEmail) {
+      user.setName(change.getName());
+      user.setEmail(change.getEmail());
+    } else {
+      badResultResponse.addError("name", "Имя указано неверно");
+      badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
     }
 
-    public ResultResponse changePassword(ChangePasswordRequest req) throws UsernameNotFoundException{
-        User user = userRepository.findByCode(req.getCode())
-                .orElseThrow(
-                        () -> new UsernameNotFoundException(
-                                String.format("user with code %s not found", req.getCode())));
-
-        if (addErrorsForChangePassword(req).hasErrors()) {
-            return addErrorsForChangePassword(req);
-        }
-
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
-        userRepository.save(user);
-        return new OkResultResponse();
+    if (change.getPassword() != null) {
+      if (isPasswordValid(change.getPassword())) {
+        user.setPassword(passwordEncoder.encode(change.getPassword()));
+      } else {
+        badResultResponse.addError("password", "Слишком короткий пароль");
+      }
     }
 
-    public ResultResponse registerUser(RegisterRequest req) throws ContentNotAllowedException {
-        if (!settingsRepository.getMultiUser()) {
-            throw new ContentNotAllowedException().createWith("регистрация","Регистрация запрещена!");
-        }
-        if (addErrorsForRegister(req).hasErrors()) {
-            return addErrorsForRegister(req);
-        }
-
-        String newHashPassword = passwordEncoder.encode(req.getPassword());
-        User user = new User(LocalDateTime.now(), req.getName(), req.getEmail(), newHashPassword);
-        userRepository.save(user);
-        return new OkResultResponse();
+    if (change.getRemovePhoto() != null && change.getPhoto() != null) {
+      if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
+        imageService.deletePhoto(user.getPhoto());
+        user.setPhoto(imageService.resizeImage(change.getPhoto()));
+      } else {
+        badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
+      }
+      if (change.getRemovePhoto() == 1 && change.getPhoto().getSize() == 0) {
+        imageService.deletePhoto(user.getPhoto());
+      }
     }
 
-    public ResultResponse editMyProfile(ChangeDataMyProfile change) {
-        BadResultResponse badResultResponse = new BadResultResponse();
+    userRepository.save(user);
 
-        User user = getAuthorizedUser();
-
-        String nameUserHttpSession = user.getName();
-        String emailUserHttpSession = user.getEmail();
-
-        boolean trueEmail = change.getEmail().matches(correctMail);
-        boolean existEmail = userRepository.existEmailOrNot(emailUserHttpSession) != null;
-        boolean notEqualsEmail = !change.getEmail().equals(emailUserHttpSession);
-        boolean nameTrue = !change.getName().isBlank() && !change.getName().equals(nameUserHttpSession);
-
-        if (nameTrue && trueEmail && existEmail && notEqualsEmail) {
-            user.setName(change.getName());
-            user.setEmail(change.getEmail());
-        } else {
-            badResultResponse.addError("name", "Имя указано неверно");
-            badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
-        }
-
-        if (change.getPassword() != null) {
-            if (isPasswordValid(change.getPassword())) {
-                user.setPassword(passwordEncoder.encode(change.getPassword()));
-            } else {
-                badResultResponse.addError("password", "Слишком короткий пароль");
-            }
-        }
-
-        if (change.getRemovePhoto() != null && change.getPhoto() != null) {
-            if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
-                imageService.deletePhoto(user.getPhoto());
-                user.setPhoto(imageService.resizeImage(change.getPhoto()));
-            } else {
-                badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
-            }
-            if (change.getRemovePhoto() == 1 && change.getPhoto().getSize() == 0) {
-                imageService.deletePhoto(user.getPhoto());
-            }
-        }
-
-        userRepository.save(user);
-
-        if (badResultResponse.hasErrors()) {
-            return badResultResponse;
-        }
-
-        return new OkResultResponse();
+    if (badResultResponse.hasErrors()) {
+      return badResultResponse;
     }
 
-    private String generateHashCode() {
-        return IntStream.range(0, lengthHashKey).map(i -> (int) (Math.random() * (alphabetAndDigits.length - 1)))
-                .mapToObj(a -> String.valueOf(alphabetAndDigits[a])).collect(Collectors.joining());
+    return new OkResultResponse();
+  }
+
+  private String generateHashCode() {
+    return IntStream.range(0, lengthHashKey)
+        .map(i -> (int) (Math.random() * (alphabetAndDigits.length - 1)))
+        .mapToObj(a -> String.valueOf(alphabetAndDigits[a]))
+        .collect(Collectors.joining());
+  }
+
+  private AllUserInformationResponse getAllUserInformation(User user) {
+    UserWithPhotoResponse userWithPhotoResponse =
+        new UserWithPhotoResponse(user.getId(), user.getName(), user.getPhoto());
+    AllUserInformationResponse allUserInformationResponse =
+        new AllUserInformationResponse(
+            userWithPhotoResponse,
+            user.getEmail(),
+            user.userModerator(),
+            user.userModerator()
+                ? postRepository.countPostsUserForModerationStatusNew(user.getId())
+                : 0,
+            user.userModerator());
+    return allUserInformationResponse;
+  }
+
+  private BadResultResponse addErrorsForRegister(RegisterRequest req) {
+    BadResultResponse badResultResponse = new BadResultResponse();
+
+    if (isUserExist(req.getEmail())) {
+
+      badResultResponse.addError("email", "Этот e_mail уже зарегистрирован");
     }
 
-    private AllUserInformationResponse getAllUserInformation(User user) {
-        UserWithPhotoResponse userWithPhotoResponse =
-                new UserWithPhotoResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getPhoto());
-        AllUserInformationResponse allUserInformationResponse =
-                new AllUserInformationResponse(
-                        userWithPhotoResponse,
-                        user.getEmail(),
-                        user.userModerator(),
-                        user.userModerator() ? postRepository
-                                .countPostsUserForModerationStatusNew(user.getId()) : 0,
-                        user.userModerator()
-                );
-        return allUserInformationResponse;
+    if (isEmailNotCorrect(req.getEmail())) {
+      badResultResponse.addError("email", "e_mail введен некорректно");
     }
 
-    private BadResultResponse addErrorsForRegister(RegisterRequest req) {
-        BadResultResponse badResultResponse = new BadResultResponse();
-
-        if (isUserExist(req.getEmail())) {
-
-            badResultResponse.addError("email", "Этот e_mail уже зарегистрирован");
-        }
-
-        if (isEmailNotCorrect(req.getEmail())) {
-            badResultResponse.addError("email", "e_mail введен некорректно");
-        }
-
-        if (isNameBlank(req.getName())) {
-            badResultResponse.addError("name", "Имя указано неверно");
-        }
-
-        if (isPasswordValid(req.getPassword())) {
-            badResultResponse.addError("password", "Слишком короткий пароль");
-        }
-
-        if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
-            badResultResponse.addError("captcha", "Код с картинки введён неверно");
-        }
-
-        return new BadResultResponse(badResultResponse.getErrors());
+    if (isNameBlank(req.getName())) {
+      badResultResponse.addError("name", "Имя указано неверно");
     }
 
-    private BadResultResponse addErrorsForChangePassword(ChangePasswordRequest req) {
-        BadResultResponse badResultResponse = new BadResultResponse();
-
-        if (req.getCode().isBlank()) {
-            badResultResponse.addError("code", "Ссылка для восстановления пароля устарела." +
-                    "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
-        }
-
-        if (isPasswordValid(req.getPassword())) {
-            badResultResponse.addError("password", "Слишком короткий пароль");
-        }
-
-        if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
-            badResultResponse.addError("captcha", "Код с картинки введён неверно");
-        }
-
-        return new BadResultResponse(badResultResponse.getErrors());
+    if (isPasswordValid(req.getPassword())) {
+      badResultResponse.addError("password", "Слишком короткий пароль");
     }
 
-    private Boolean isUserExist(String email) {
-        return userRepository.getByEmail(email).isPresent();
+    if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
+      badResultResponse.addError("captcha", "Код с картинки введён неверно");
     }
 
-    private Boolean isEmailNotCorrect(String email) {
-        return !email.matches(correctMail);
+    return new BadResultResponse(badResultResponse.getErrors());
+  }
+
+  private BadResultResponse addErrorsForChangePassword(ChangePasswordRequest req) {
+    BadResultResponse badResultResponse = new BadResultResponse();
+
+    if (req.getCode().isBlank()) {
+      badResultResponse.addError(
+          "code",
+          "Ссылка для восстановления пароля устарела."
+              + "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
     }
 
-    private Boolean isNameBlank(String name) {
-        return name.isBlank();
+    if (isPasswordValid(req.getPassword())) {
+      badResultResponse.addError("password", "Слишком короткий пароль");
     }
 
-    private Boolean isPasswordValid(String password) {
-        return password.isBlank() && password.length() < minLengthPassword;
+    if (!isCaptchaSecretValid(req.getCaptcha(), req.getCaptchaSecret())) {
+      badResultResponse.addError("captcha", "Код с картинки введён неверно");
     }
 
-    private Boolean isCaptchaSecretValid(String captcha, String captchaSecret) {
-        return captcha.isBlank() || captchaSecret.isBlank() ||
-                captchaService.checkCaptcha(captcha, captchaSecret);
-    }
+    return new BadResultResponse(badResultResponse.getErrors());
+  }
 
-    @Override
-    public User getCurrentUserByEmail(String email) {
-        Optional<User> currentUser = userRepository.getByEmail(email);
-        if (currentUser.isEmpty()) {
-            throw new UsernameNotFoundException(
-                    String.format("user with email %s not found", email));
-        } else {
-            return currentUser.get();
-        }
-    }
+  private Boolean isUserExist(String email) {
+    return userRepository.getByEmail(email).isPresent();
+  }
 
-    public User getAuthorizedUser() {
-        org.springframework.security.core.userdetails.User userDetails =
-                (org.springframework.security.core.userdetails.User)
-                        SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return getCurrentUserByEmail(userDetails.getUsername());
+  private Boolean isEmailNotCorrect(String email) {
+    return !email.matches(correctMail);
+  }
+
+  private Boolean isNameBlank(String name) {
+    return name.isBlank();
+  }
+
+  private Boolean isPasswordValid(String password) {
+    return password.isBlank() && password.length() < minLengthPassword;
+  }
+
+  private Boolean isCaptchaSecretValid(String captcha, String captchaSecret) {
+    return captcha.isBlank()
+        || captchaSecret.isBlank()
+        || captchaService.checkCaptcha(captcha, captchaSecret);
+  }
+
+  @Override
+  public User getCurrentUserByEmail(String email) {
+    Optional<User> currentUser = userRepository.getByEmail(email);
+    if (currentUser.isEmpty()) {
+      throw new UsernameNotFoundException(String.format("user with email %s not found", email));
+    } else {
+      return currentUser.get();
     }
+  }
 }

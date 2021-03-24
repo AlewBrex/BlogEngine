@@ -6,5 +6,4 @@ import javax.servlet.http.HttpSession;
 
 public interface UserService {
     User getCurrentUserByEmail(String email);
-    User getAuthorizedUser();
 }
