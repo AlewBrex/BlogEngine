@@ -2,18 +2,22 @@ package main.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import main.Main;
 import main.api.request.LikeDislikeRequest;
 import main.api.response.ResultResponse;
 import main.api.response.result.FalseResultResponse;
 import main.api.response.result.OkResultResponse;
+import main.exception.LoginUserWrongCredentialsException;
+import main.exception.NotPresentPost;
 import main.model.Post;
 import main.model.User;
 import main.model.Vote;
 import main.model.repository.PostRepository;
+import main.model.repository.UserRepository;
 import main.model.repository.VoteRepository;
-import main.service.interfaces.UserService;
 import main.service.interfaces.VoteService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -24,44 +28,47 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class VoteServiceImpl implements VoteService {
 
-    private final VoteRepository voteRepository;
-    private final PostRepository postRepository;
-    private final UserService userService;
+  private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-    public ResultResponse likePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
-        boolean like = setVote(likeDislikeRequest, 1, principal);
-        return like ? new OkResultResponse() : new FalseResultResponse();
+  private final VoteRepository voteRepository;
+  private final PostRepository postRepository;
+  private final UserRepository userRepository;
+
+  public ResultResponse likePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
+    boolean like = setVote(likeDislikeRequest, 1, principal);
+    return like ? new OkResultResponse() : new FalseResultResponse();
+  }
+
+  public ResultResponse dislikePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
+    boolean dislike = setVote(likeDislikeRequest, -1, principal);
+    return dislike ? new OkResultResponse() : new FalseResultResponse();
+  }
+
+  private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal)
+      throws LoginUserWrongCredentialsException {
+    int id = likeDislikeRequest.getPostId();
+    Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
+    User user =
+        userRepository
+            .getByEmail(principal.getName())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+    LOGGER.info("User isn't authorized");
+    Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
+
+    if (vote == null || vote.getValue() != voteValue) {
+      voteRepository.delete(vote);
+      getNewVote(user, post, voteValue);
     }
+    return false;
+  }
 
-    public ResultResponse dislikePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
-        boolean dislike = setVote(likeDislikeRequest, -1, principal);
-        return dislike ? new OkResultResponse() : new FalseResultResponse();
-    }
-
-    private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal) throws UsernameNotFoundException {
-        int id = likeDislikeRequest.getPostId();
-        Post post = postRepository.getPostById(id);
-        User user = userService.getCurrentUserByEmail(principal.getName());
-        if (user == null) {
-            log.error("User isn't authorized");
-            throw new UsernameNotFoundException("Вы не зарегистрированы");
-        }
-        Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
-
-        if (vote == null || vote.getValue() != voteValue) {
-            voteRepository.delete(vote);
-            getNewVote(user, post, voteValue);
-        }
-        return false;
-    }
-
-    private Boolean getNewVote(User user, Post post, Integer vote) {
-        Vote firstVote = new Vote();
-        firstVote.setUsers(user);
-        firstVote.setPost(post);
-        firstVote.setTime(LocalDateTime.now());
-        firstVote.setValue(vote);
-        voteRepository.save(firstVote);
-        return true;
-    }
+  private Boolean getNewVote(User user, Post post, Integer vote) {
+    Vote firstVote = new Vote();
+    firstVote.setUsers(user);
+    firstVote.setPost(post);
+    firstVote.setTime(LocalDateTime.now());
+    firstVote.setValue(vote);
+    voteRepository.save(firstVote);
+    return true;
+  }
 }

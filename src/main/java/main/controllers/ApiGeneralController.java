@@ -76,15 +76,15 @@ public class ApiGeneralController {
     }
 
     @PostMapping(value = "profile/my")
-    public ResponseEntity<?> editProfile(@RequestBody ChangeDataMyProfile changeWithPassword) {
+    public ResponseEntity<?> editProfile(@RequestBody ChangeDataMyProfile changeWithPassword, Principal principal) {
         log.info("Получен POST запрос api/profile/my");
-        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword, principal), HttpStatus.OK);
     }
 
     @PostMapping(value = "profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> editProfileAndMultipartFile(@ModelAttribute ChangeDataMyProfile changeWithPassword) {
+    public ResponseEntity<?> editProfileAndMultipartFile(@ModelAttribute ChangeDataMyProfile changeWithPassword, Principal principal) {
         log.info("Получен POST запрос api/profile/my с изменением фотографии пользователя");
-        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword), HttpStatus.OK);
+        return new ResponseEntity<>(userServiceImpl.editMyProfile(changeWithPassword, principal), HttpStatus.OK);
     }
 
     @GetMapping(value = "statistics/my")

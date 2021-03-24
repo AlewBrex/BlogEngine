@@ -9,12 +9,11 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ContentNotAllowedException extends Exception {
-    Map<String, String> errors;
+public class ContentNotAllowedException extends RuntimeException {
+  Map<String, String> errors;
 
-    public ContentNotAllowedException createWith(String string, String stringMap) {
-        errors.put(string, stringMap);
-        return new ContentNotAllowedException(errors);
-    }
-
+  public ContentNotAllowedException createWith(String string, String stringMap) {
+    errors.put(string, stringMap);
+    return new ContentNotAllowedException(errors);
+  }
 }

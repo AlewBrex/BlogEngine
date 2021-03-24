@@ -1,85 +1,68 @@
 package main.exception;
 
 import lombok.extern.log4j.Log4j2;
+import main.Main;
 import main.api.response.ResultResponse;
 import main.api.response.result.BadResultResponse;
+import main.api.response.result.FalseResultResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.util.WebUtils;
-
-import java.security.InvalidParameterException;
 
 @Log4j2
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({
-            UsernameNotFoundException.class,
-            ContentNotAllowedException.class,
-            InvalidParameterException.class})
-    @Nullable
-    public final ResponseEntity<ResultResponse> handleException(Exception ex, WebRequest request) {
-        HttpHeaders headers = new HttpHeaders();
+  private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-        if (ex instanceof ContentNotAllowedException) {
-            HttpStatus status = HttpStatus.NOT_FOUND;
-            ContentNotAllowedException cnae = (ContentNotAllowedException) ex;
+  @ExceptionHandler(value = {LoginUserWrongCredentialsException.class, IllegalStateException.class})
+  protected ResponseEntity<ResultResponse> handleWrongCredentials(
+      LoginUserWrongCredentialsException ex, WebRequest request) {
+    LOGGER.info(ex.getMessage());
+    return ResponseEntity.ok(new FalseResultResponse());
+  }
 
-            log.info(ex.getMessage());
+  @ExceptionHandler(value = {WrongParameterException.class})
+  protected ResponseEntity<ResultResponse> handleBlockStatistic(
+      WrongParameterException ex, WebRequest request) {
+    LOGGER.info(ex.getMessage());
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+  }
 
-            return handleContentNotAllowedException(cnae, headers, status, request);
-        } else if (ex instanceof UsernameNotFoundException) {
-            HttpStatus status = HttpStatus.UNAUTHORIZED;
-            UsernameNotFoundException unfe = (UsernameNotFoundException) ex;
+  @ExceptionHandler(value = {EmptyTextComment.class})
+  protected ResponseEntity<ResultResponse> handleSendComment(
+      EmptyTextComment ex, WebRequest request) {
+    LOGGER.info(ex.getMessage());
+    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+  }
 
-            log.info(ex.getMessage());
+  @ExceptionHandler(value = {NotPresentPost.class})
+  protected ResponseEntity<ResultResponse> handleFindPostById(
+          NotPresentPost ex, WebRequest request) {
+    LOGGER.info(ex.getMessage());
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+  }
 
-            return handleUsernameNotFoundException(unfe, headers, status, request);
-        } else if (ex instanceof InvalidParameterException) {
-            HttpStatus status = HttpStatus.BAD_REQUEST;
-            InvalidParameterException ipe = (InvalidParameterException) ex;
+  @ExceptionHandler(value = {UpSizeAtUploadImage.class})
+  protected ResponseEntity<ResultResponse> handleUploadImage(
+          UpSizeAtUploadImage ex, WebRequest request) {
+    LOGGER.info(ex.getMessage());
+    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+  }
 
-            log.info(ex.getMessage());
-
-            return handleInvalidParameterException(ipe, headers, status, request);
-        } else {
-            if (log.isWarnEnabled()) {
-                log.warn("Unknown exception type: " + ex.getClass().getName());
-            }
-            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-            return handleExceptionInternal(ex, null, headers, status, request);
-        }
+  @ExceptionHandler
+  protected ResponseEntity<Object> handleExceptionInternal(
+      Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    if (HttpStatus.INTERNAL_SERVER_ERROR.equals(status)) {
+      request.setAttribute(WebUtils.ERROR_EXCEPTION_ATTRIBUTE, ex, WebRequest.SCOPE_REQUEST);
     }
-
-    protected ResponseEntity<ResultResponse> handleContentNotAllowedException(
-            ContentNotAllowedException ex, HttpHeaders headers,
-            HttpStatus status, WebRequest request) {
-        return handleExceptionInternal(ex, new BadResultResponse("content", ex.getMessage()), headers, status, request);
-    }
-
-    protected ResponseEntity<ResultResponse> handleUsernameNotFoundException(
-            UsernameNotFoundException ex, HttpHeaders headers,
-            HttpStatus status, WebRequest request) {
-        return handleExceptionInternal(ex, new BadResultResponse("user", ex.getMessage()), headers, status, request);
-    }
-
-    protected ResponseEntity<ResultResponse> handleInvalidParameterException(
-            InvalidParameterException ex, HttpHeaders headers,
-            HttpStatus status, WebRequest request) {
-        return handleExceptionInternal(ex, new BadResultResponse("parameter", ex.getMessage()), headers, status, request);
-    }
-
-    protected ResponseEntity<ResultResponse> handleExceptionInternal(Exception ex, ResultResponse body, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        if (HttpStatus.INTERNAL_SERVER_ERROR.equals(status)) {
-            request.setAttribute(WebUtils.ERROR_EXCEPTION_ATTRIBUTE, ex, WebRequest.SCOPE_REQUEST);
-        }
-
-        return new ResponseEntity<>(body, headers, status);
-    }
+    return super.handleExceptionInternal(ex, body, headers, status, request);
+  }
 }

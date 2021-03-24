@@ -2,12 +2,13 @@ package main.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import main.Main;
 import main.api.request.CommentRequest;
 import main.api.response.IdResponse;
 import main.api.response.ResultResponse;
 import main.api.response.result.BadResultResponse;
 import main.api.response.result.FalseResultResponse;
-import main.exception.ContentNotAllowedException;
+import main.exception.*;
 import main.model.Comment;
 import main.model.Post;
 import main.model.User;
@@ -16,6 +17,8 @@ import main.model.repository.PostRepository;
 import main.model.repository.UserRepository;
 import main.service.interfaces.CommentService;
 import main.service.interfaces.UserService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,48 +33,48 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
-    @Value("${comment.min_length}")
-    private int minLengthComment;
-    @Value("${comment.max_length}")
-    private int maxLengthComment;
 
-    private final CommentRepository commentRepository;
-    private final PostRepository postRepository;
-    private final UserRepository userRepository;
+  private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-    public ResultResponse addComment(CommentRequest req, Principal principal) throws UsernameNotFoundException, ContentNotAllowedException {
-        BadResultResponse badResultResponse = new BadResultResponse();
-        Optional<User> optionalUser = null;
-        if (principal != null) {
-            optionalUser = userRepository.getByEmail(principal.getName());
-        }
-        if (!optionalUser.isPresent()) {
-            log.info("Пользователя не найден. Попробуйте зарегистрироваться.");
-            throw new UsernameNotFoundException("Пользователь не зарегистрирован.");
-        }
-        User user = optionalUser.get();
-        if (getTextOk(req.getText())) {
-            log.warn("Short text or don't exist");
-            badResultResponse.addError("text", "Tекст комментария не задан или слишком короткий");
-            return new BadResultResponse(badResultResponse.getErrors());
-        }
+  @Value("${comment.min_length}")
+  private int minLengthComment;
 
-        Document textOfHtml = Jsoup.parse(req.getText());
-        String newText = textOfHtml.text();
-        Comment commentParent = commentRepository.findById(req.getParentId()).orElse(null);
-        Post post = postRepository.getPostById(req.getPostId());
+  @Value("${comment.max_length}")
+  private int maxLengthComment;
 
-        if (commentParent == null && post == null) {
-            log.warn("Don't exist parent comment or post");
-            throw new ContentNotAllowedException().createWith("text", "Don't exist parent comment or post");
-        }
-        Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
-        commentRepository.save(newComment);;
-        return new IdResponse(newComment.getId());
+  private final CommentRepository commentRepository;
+  private final PostRepository postRepository;
+  private final UserRepository userRepository;
+
+  public ResultResponse addComment(CommentRequest req, Principal principal)
+      throws LoginUserWrongCredentialsException, EmptyTextComment {
+    BadResultResponse badResultResponse = new BadResultResponse();
+    User user =
+        userRepository
+            .getByEmail(principal.getName())
+            .orElseThrow(LoginUserWrongCredentialsException::new);
+    if (getTextOk(req.getText())) {
+      LOGGER.warn("Short text or don't exist");
+      badResultResponse.addError("text", "Tекст комментария не задан или слишком короткий");
+      return new BadResultResponse(badResultResponse.getErrors());
     }
 
-    private Boolean getTextOk(String text) {
-        return text.isBlank() || text.length() < minLengthComment ||
-                text.length() > maxLengthComment;
+    Document textOfHtml = Jsoup.parse(req.getText());
+    String newText = textOfHtml.text();
+    Comment commentParent = commentRepository.findById(req.getParentId()).orElse(null);
+    Post post = postRepository.getPostById(req.getPostId()).orElseThrow(NotPresentPost::new);
+
+    if (commentParent == null && post == null) {
+      LOGGER.warn("Don't exist parent comment or post");
+      throw new EmptyTextComment();
     }
+    Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
+    commentRepository.save(newComment);
+    ;
+    return new IdResponse(newComment.getId());
+  }
+
+  private Boolean getTextOk(String text) {
+    return text.isBlank() || text.length() < minLengthComment || text.length() > maxLengthComment;
+  }
 }
