@@ -7,8 +7,9 @@ import main.api.request.CommentRequest;
 import main.api.response.IdResponse;
 import main.api.response.ResultResponse;
 import main.api.response.result.BadResultResponse;
-import main.api.response.result.FalseResultResponse;
-import main.exception.*;
+import main.exception.EmptyTextComment;
+import main.exception.LoginUserWrongCredentialsException;
+import main.exception.NotPresentPost;
 import main.model.Comment;
 import main.model.Post;
 import main.model.User;
@@ -16,13 +17,11 @@ import main.model.repository.CommentRepository;
 import main.model.repository.PostRepository;
 import main.model.repository.UserRepository;
 import main.service.interfaces.CommentService;
-import main.service.interfaces.UserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -49,11 +48,15 @@ public class CommentServiceImpl implements CommentService {
   public ResultResponse addComment(CommentRequest req, Principal principal)
       throws LoginUserWrongCredentialsException, EmptyTextComment {
     BadResultResponse badResultResponse = new BadResultResponse();
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
-    if (getTextOk(req.getText())) {
+    User user = null;
+    if (principal == null) {
+      throw new LoginUserWrongCredentialsException();
+    }
+    Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+    if (optionalUser.isPresent()) {
+      user = optionalUser.get();
+    }
+    if (getTextNotOk(req.getText())) {
       LOGGER.warn("Short text or don't exist");
       badResultResponse.addError("text", "Tекст комментария не задан или слишком короткий");
       return new BadResultResponse(badResultResponse.getErrors());
@@ -70,11 +73,10 @@ public class CommentServiceImpl implements CommentService {
     }
     Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
     commentRepository.save(newComment);
-    ;
     return new IdResponse(newComment.getId());
   }
 
-  private Boolean getTextOk(String text) {
+  private Boolean getTextNotOk(String text) {
     return text.isBlank() || text.length() < minLengthComment || text.length() > maxLengthComment;
   }
 }

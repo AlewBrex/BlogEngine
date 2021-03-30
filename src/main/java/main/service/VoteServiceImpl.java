@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -46,18 +47,22 @@ public class VoteServiceImpl implements VoteService {
 
   private boolean setVote(LikeDislikeRequest likeDislikeRequest, int voteValue, Principal principal)
       throws LoginUserWrongCredentialsException {
-    int id = likeDislikeRequest.getPostId();
-    Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
-    LOGGER.info("User isn't authorized");
-    Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
+    User user;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        user = optionalUser.get();
+        int id = likeDislikeRequest.getPostId();
+        Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
 
-    if (vote == null || vote.getValue() != voteValue) {
-      voteRepository.delete(vote);
-      getNewVote(user, post, voteValue);
+        LOGGER.info("User isn't authorized");
+        Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
+
+        if (vote == null || vote.getValue() != voteValue) {
+          voteRepository.delete(vote);
+          getNewVote(user, post, voteValue);
+        }
+      }
     }
     return false;
   }

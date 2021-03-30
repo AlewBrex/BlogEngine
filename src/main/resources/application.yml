@@ -28,7 +28,7 @@ captcha:
   length_key: 33
   image:
     format: png
-    title_path: data:image/png;base64,
+    title_path: data:image/png;base64
     height: 35 #px
     width: 100 #px
 

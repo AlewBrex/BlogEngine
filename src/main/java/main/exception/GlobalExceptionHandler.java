@@ -3,7 +3,6 @@ package main.exception;
 import lombok.extern.log4j.Log4j2;
 import main.Main;
 import main.api.response.ResultResponse;
-import main.api.response.result.BadResultResponse;
 import main.api.response.result.FalseResultResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,14 +44,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(value = {NotPresentPost.class})
   protected ResponseEntity<ResultResponse> handleFindPostById(
-          NotPresentPost ex, WebRequest request) {
+      NotPresentPost ex, WebRequest request) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(value = {UpSizeAtUploadImage.class})
   protected ResponseEntity<ResultResponse> handleUploadImage(
-          UpSizeAtUploadImage ex, WebRequest request) {
+      UpSizeAtUploadImage ex, WebRequest request) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
   }

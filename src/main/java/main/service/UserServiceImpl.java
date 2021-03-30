@@ -95,7 +95,7 @@ public class UserServiceImpl implements UserService {
   }
 
   public ResultResponse login(LoginRequest req)
-      throws IllegalStateException, LoginUserWrongCredentialsException {
+      throws LoginUserWrongCredentialsException, IllegalStateException {
     String email = req.getEmail();
     String password = req.getPassword();
     User userRepo =
@@ -103,7 +103,7 @@ public class UserServiceImpl implements UserService {
             .getByEmail(req.getEmail())
             .orElseThrow(LoginUserWrongCredentialsException::new);
 
-    if (!passwordEncoder.matches(userRepo.getPassword(), password)) {
+    if (!passwordEncoder.matches(password, userRepo.getPassword())) {
       log.info("password not correct");
       throw new LoginUserWrongCredentialsException();
     }
@@ -112,12 +112,13 @@ public class UserServiceImpl implements UserService {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(email, password));
 
+    if (auth == null) {
+      return new FalseResultResponse();
+    }
     SecurityContextHolder.getContext().setAuthentication(auth);
     org.springframework.security.core.userdetails.User user =
-        (org.springframework.security.core.userdetails.User) auth.getPrincipal();
-
+            (org.springframework.security.core.userdetails.User) auth.getPrincipal();
     User currentUser = getCurrentUserByEmail(user.getUsername());
-
     return new LoginResultResponse(getAllUserInformation(currentUser));
   }
 
@@ -128,39 +129,48 @@ public class UserServiceImpl implements UserService {
 
   public ResultResponse myStatistics(Principal principal)
       throws LoginUserWrongCredentialsException, IllegalStateException {
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
+    User user;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        user = optionalUser.get();
+        int userId = user.getId();
+        int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+        int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
+        int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
+        int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
 
-    int userId = user.getId();
-    int postsCount = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-    int likesCount = postRepository.countLikesMyPosts(userId).orElse(0);
-    int dislikeCount = postRepository.countDislikesMyPosts(userId).orElse(0);
-    int viewsCount = postRepository.countViewsMyPosts(userId).orElse(0);
+        LocalDateTime time = postRepository.timeMyFirstPublication(userId);
+        long timeFirstPublication = 0;
 
-    LocalDateTime time = postRepository.timeMyFirstPublication(userId);
-    long timeFirstPublication = 0;
+        if (time != null) {
+          timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+        }
 
-    if (time != null) {
-      timeFirstPublication = time.atZone(ZoneId.systemDefault()).toEpochSecond();
+        LOGGER.info("Available my statistics");
+        return new StatisticsResponse(
+            postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
+      }
     }
-
-    LOGGER.info("Available my statistics");
-    return new StatisticsResponse(
-        postsCount, likesCount, dislikeCount, viewsCount, timeFirstPublication);
+    throw new LoginUserWrongCredentialsException();
   }
 
-  public ResultResponse allStatistics(Principal principal) throws LoginUserWrongCredentialsException, WrongParameterException {
-    String emailLoggedUser = SecurityContextHolder.getContext().getAuthentication().getName();
-    User user =
-        userRepository
-            .getByEmail(emailLoggedUser)
-            .orElseThrow(LoginUserWrongCredentialsException::new);
-    System.out.println(user.getEmail());
+  public ResultResponse allStatistics(Principal principal)
+      throws LoginUserWrongCredentialsException, WrongParameterException {
+    User user;
+    boolean moderatorAuth = false;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        user = optionalUser.get();
+        if (user.userModerator()) {
+          moderatorAuth = true;
+        }
+      }
+    }
 
     boolean statisticsIsPublic = !settingsRepository.getStatIsPub();
-    if (statisticsIsPublic && !user.userModerator() && user!= null) {
+    if (statisticsIsPublic && moderatorAuth) {
       LOGGER.info("Banned public display of statistics");
       throw new WrongParameterException();
     }
@@ -292,18 +302,14 @@ public class UserServiceImpl implements UserService {
   }
 
   private AllUserInformationResponse getAllUserInformation(User user) {
-    UserWithPhotoResponse userWithPhotoResponse =
-        new UserWithPhotoResponse(user.getId(), user.getName(), user.getPhoto());
-    AllUserInformationResponse allUserInformationResponse =
-        new AllUserInformationResponse(
-            userWithPhotoResponse,
-            user.getEmail(),
-            user.userModerator(),
-            user.userModerator()
-                ? postRepository.countPostsUserForModerationStatusNew(user.getId())
-                : 0,
-            user.userModerator());
-    return allUserInformationResponse;
+    return new AllUserInformationResponse(
+        new UserWithPhotoResponse(user.getId(), user.getName(), user.getPhoto()),
+        user.getEmail(),
+        user.userModerator(),
+        user.userModerator()
+            ? postRepository.countPostsUserForModerationStatusNew(user.getId())
+            : 0,
+        user.userModerator());
   }
 
   private BadResultResponse addErrorsForRegister(RegisterRequest req) {

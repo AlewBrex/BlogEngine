@@ -1,6 +1,5 @@
 package main.config;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Data
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -35,8 +33,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .anyRequest()
         .authenticated()
         .and()
-        .exceptionHandling()
-        .disable()
         .formLogin()
         .disable()
         .httpBasic()

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.security.Principal;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -35,17 +36,21 @@ public class SettingsServiceImpl implements SettingsService {
 
   public void saveGlobalSettings(SettingsRequest req, Principal principal)
       throws LoginUserWrongCredentialsException {
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
-    if (user.userModerator()) {
-      repo.dropSettings();
-      repo.setMultiUser(blnString(req.isMultiuserMode()));
-      repo.setPostPremod(blnString(req.isPostPremoderation()));
-      repo.setStatIsPub(blnString(req.isStatisticsIsPublic()));
-      LOGGER.info("Установлены новые настройки");
+    User user;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        user = optionalUser.get();
+        if (user.userModerator()) {
+          repo.dropSettings();
+          repo.setMultiUser(blnString(req.isMultiuserMode()));
+          repo.setPostPremod(blnString(req.isPostPremoderation()));
+          repo.setStatIsPub(blnString(req.isStatisticsIsPublic()));
+          LOGGER.info("Установлены новые настройки");
+        }
+      }
     }
+    throw new LoginUserWrongCredentialsException();
   }
 
   private String blnString(boolean bln) {

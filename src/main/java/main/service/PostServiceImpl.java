@@ -29,7 +29,6 @@ import main.service.interfaces.PostService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -128,186 +127,210 @@ public class PostServiceImpl implements PostService {
   }
 
   public ResultResponse getPostsForModeration(
-      int offset, int limit, String status, Principal principal) {
-    Optional<User> user = userRepository.getByEmail(principal.getName());
-    if (!user.isPresent() || !user.get().userModerator()) {
-      LOGGER.info("User isn't authorized");
-    }
-
+      int offset, int limit, String status, Principal principal)
+      throws LoginUserWrongCredentialsException {
     List<Post> postSet = new ArrayList<>();
     int countPostsForModeration = 0;
-    int userId = user.get().getId();
 
-    switch (status) {
-      case "new":
-        postSet.addAll(postRepository.postsForModeration(offset, limit, "NEW", userId));
-        countPostsForModeration = postRepository.countPostsForModerationStatusNew().orElse(0);
-        break;
-      case "declined":
-        postSet.addAll(postRepository.postsForModeration(offset, limit, "DECLINED", userId));
-        countPostsForModeration = postRepository.countPostStatus(userId, "DECLINED").orElse(0);
-        break;
-      case "accepted":
-        postSet.addAll(postRepository.postsForModeration(offset, limit, "ACCEPTED", userId));
-        countPostsForModeration = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-        break;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        User user = optionalUser.get();
+        if (user.userModerator()) {
+          int userId = user.getId();
+
+          switch (status) {
+            case "new":
+              postSet.addAll(postRepository.postsForModeration(offset, limit, "NEW", userId));
+              countPostsForModeration = postRepository.countPostsForModerationStatusNew().orElse(0);
+              break;
+            case "declined":
+              postSet.addAll(postRepository.postsForModeration(offset, limit, "DECLINED", userId));
+              countPostsForModeration =
+                  postRepository.countPostStatus(userId, "DECLINED").orElse(0);
+              break;
+            case "accepted":
+              postSet.addAll(postRepository.postsForModeration(offset, limit, "ACCEPTED", userId));
+              countPostsForModeration =
+                  postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+              break;
+          }
+        }
+      }
+      List<PostResponse> responseList = getListPostResponse(postSet);
+      return new CountPostResponse(countPostsForModeration, responseList);
     }
-
-    List<PostResponse> responseList = getListPostResponse(postSet);
-    return new CountPostResponse(countPostsForModeration, responseList);
+    throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal)
       throws LoginUserWrongCredentialsException {
-    User user =
-            userRepository
-                    .getByEmail(principal.getName())
-                    .orElseThrow(LoginUserWrongCredentialsException::new);
-    int userId = user.getId();
     List<Post> postResponseList = new ArrayList<>();
     int countPosts = 0;
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        User user = optionalUser.get();
+        if (user.userModerator()) {
+          int userId = user.getId();
 
-    switch (status) {
-      case "inactive":
-        postResponseList.addAll(postRepository.listUserPostInactive(offset, limit, userId));
-        countPosts = postRepository.countPostInactive(userId);
-        break;
-      case "pending":
-        postResponseList.addAll(postRepository.listUserPostStatus(offset, limit, userId, "NEW"));
-        countPosts = postRepository.countPostStatus(userId, "NEW").orElse(0);
-        break;
-      case "declined":
-        postResponseList.addAll(
-            postRepository.listUserPostStatus(offset, limit, userId, "DECLINED"));
-        countPosts = postRepository.countPostStatus(userId, "DECLINED").orElse(0);
-        break;
-      case "published":
-        postResponseList.addAll(
-            postRepository.listUserPostStatus(offset, limit, userId, "ACCEPTED"));
-        countPosts = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-        break;
+          switch (status) {
+            case "inactive":
+              postResponseList.addAll(postRepository.listUserPostInactive(offset, limit, userId));
+              countPosts = postRepository.countPostInactive(userId);
+              break;
+            case "pending":
+              postResponseList.addAll(
+                  postRepository.listUserPostStatus(offset, limit, userId, "NEW"));
+              countPosts = postRepository.countPostStatus(userId, "NEW").orElse(0);
+              break;
+            case "declined":
+              postResponseList.addAll(
+                  postRepository.listUserPostStatus(offset, limit, userId, "DECLINED"));
+              countPosts = postRepository.countPostStatus(userId, "DECLINED").orElse(0);
+              break;
+            case "published":
+              postResponseList.addAll(
+                  postRepository.listUserPostStatus(offset, limit, userId, "ACCEPTED"));
+              countPosts = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+              break;
+          }
+        }
+      }
+      List<PostResponse> responseList = getListPostResponse(postResponseList);
+      return new CountPostResponse(countPosts, responseList);
     }
-
-    List<PostResponse> responseList = getListPostResponse(postResponseList);
-    return new CountPostResponse(countPosts, responseList);
+    throw new LoginUserWrongCredentialsException();
   }
 
-  public ResultResponse getPostsById(int id, Principal principal) {
+  public ResultResponse getPostsById(int id, Principal principal) throws NotPresentPost {
     Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
-    Optional<User> user = userRepository.getByEmail(principal.getName());
-
-    if (!user.isPresent() || user == null
-        || ((!user.get().userModerator()) && (post.getUsers().getId() != user.get().getId()))) {
-      post.setViewCount(post.getViewCount() + 1);
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()
+          || (optionalUser.get().userModerator())
+          || (post.getUsers().getId() == optionalUser.get().getId())) {
+        return getPostForUser(post);
+      }
     }
+    post.setViewCount(post.getViewCount() + 1);
     return getPostForUser(post);
   }
 
   public ResultResponse addPost(PostRequest req, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
-    Optional<User> user = userRepository.getByEmail(principal.getName());
-    LocalDateTime localDateTime =
-        Instant.EPOCH
-            .plus(req.getTimestamp(), ChronoUnit.DAYS)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime();
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        LocalDateTime localDateTime =
+                Instant.EPOCH
+                        .plus(req.getTimestamp(), ChronoUnit.DAYS)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime();
 
-    List<Tag> tagSet = new ArrayList<>();
-    for (String t : req.getTags()) {
-      if (!t.isBlank()) {
-        tagSet.add(tagRepository.getTagByName(t));
+        List<Tag> tagSet = new ArrayList<>();
+        for (String t : req.getTags()) {
+          if (!t.isBlank()) {
+            tagSet.add(tagRepository.getTagByName(t));
+          }
+        }
+        if (localDateTime.isAfter(LocalDateTime.now())) {
+          localDateTime = LocalDateTime.now();
+        }
+        if (isTitleOk(req.getTitle())) {
+          badResultResponse.addError("title", "Заголовок слишком короткий");
+        }
+        if (isTitleOk(req.getText())) {
+          badResultResponse.addError("text", "Текст публикации слишком короткий");
+        }
+
+        if (badResultResponse.hasErrors()) {
+          return badResultResponse;
+        } else {
+          Post post = new Post();
+          post.setIsActive(req.getActive());
+          post.setUsers(optionalUser.get());
+          post.setTime(localDateTime);
+          post.setTitle(req.getTitle());
+          post.setText(req.getText());
+          post.setTags(tagSet);
+          post.setModerationStatus(Post.ModerationStatus.NEW);
+          postRepository.save(post);
+          return new OkResultResponse();
+        }
       }
-    }
-    if (localDateTime.isAfter(LocalDateTime.now())) {
-      localDateTime = LocalDateTime.now();
-    }
-    if (isTitleOk(req.getTitle())) {
-      badResultResponse.addError("title", "Заголовок слишком короткий");
-    }
-    if (isTitleOk(req.getText())) {
-      badResultResponse.addError("text", "Текст публикации слишком короткий");
-    }
-    if (!user.isPresent()) {
       LOGGER.warn("User isn't authorized or user don't exist");
     }
-
-    if (badResultResponse.hasErrors()) {
-      return badResultResponse;
-    } else {
-      Post post = new Post();
-      post.setIsActive(req.getActive());
-      post.setUsers(user.get());
-      post.setTime(localDateTime);
-      post.setTitle(req.getTitle());
-      post.setText(req.getText());
-      post.setTags(tagSet);
-      post.setModerationStatus(Post.ModerationStatus.NEW);
-      postRepository.save(post);
-      return new OkResultResponse();
-    }
+   throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse editPost(int idPost, PostRequest req, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
-    Post post = postRepository.getPostById(idPost).orElseThrow(NotPresentPost::new);
+    if (principal != null) {
+      Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+      if (optionalUser.isPresent()) {
+        User user = optionalUser.get();
+        Post post = postRepository.getPostById(idPost).orElseThrow(NotPresentPost::new);
 
-    LocalDateTime localDateTime =
-        Instant.EPOCH
-            .plus(req.getTimestamp(), ChronoUnit.DAYS)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime();
+        LocalDateTime localDateTime =
+            Instant.EPOCH
+                .plus(req.getTimestamp(), ChronoUnit.DAYS)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
 
-    Optional<User> user = userRepository.getByEmail(principal.getName());
+        if (localDateTime.isAfter(LocalDateTime.now())) {
+          localDateTime = LocalDateTime.now();
+        }
+        if (isTitleOk(req.getTitle())) {
+          badResultResponse.addError("title", "Заголовок слишком короткий");
+        }
+        if (isTextOk(req.getText())) {
+          badResultResponse.addError("text", "Текст публикации слишком короткий");
+        }
 
-    List<Tag> tagSet = new ArrayList<>();
-    for (String t : req.getTags()) {
-      if (!t.isBlank()) {
-        Tag tag = tagRepository.getTagByName(t);
-        tagSet.add(tag);
+        if (!user.userModerator()) {
+          LOGGER.warn("User isn't authorized or user don't exist");
+
+          List<Tag> tagSet = new ArrayList<>();
+          for (String t : req.getTags()) {
+            if (!t.isBlank()) {
+              Tag tag = tagRepository.getTagByName(t);
+              tagSet.add(tag);
+            }
+          }
+
+          if (badResultResponse.hasErrors()) {
+            return badResultResponse;
+          } else {
+            post.setIsActive(req.getActive());
+            post.setTitle(req.getTitle());
+            post.setText(req.getText());
+            post.setTime(localDateTime);
+            post.setTags(tagSet);
+            post.setModerationStatus(
+                user.userModerator() ? Post.ModerationStatus.ACCEPTED : Post.ModerationStatus.NEW);
+            postRepository.save(post);
+            return new OkResultResponse();
+          }
+        }
       }
     }
-
-    if (localDateTime.isAfter(LocalDateTime.now())) {
-      localDateTime = LocalDateTime.now();
-    }
-    if (isTitleOk(req.getTitle())) {
-      badResultResponse.addError("title", "Заголовок слишком короткий");
-    }
-    if (isTextOk(req.getText())) {
-      badResultResponse.addError("text", "Текст публикации слишком короткий");
-    }
-    if (!user.isPresent() || !user.get().userModerator()) {
-      LOGGER.warn("User isn't authorized or user don't exist");
-    }
-
-    if (badResultResponse.hasErrors()) {
-      return badResultResponse;
-    } else {
-      post.setIsActive(req.getActive());
-      post.setTitle(req.getTitle());
-      post.setText(req.getText());
-      post.setTime(localDateTime);
-      post.setTags(tagSet);
-      post.setModerationStatus(
-          user.get().userModerator() ? Post.ModerationStatus.ACCEPTED : Post.ModerationStatus.NEW);
-      postRepository.save(post);
-      return new OkResultResponse();
-    }
+    throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
       throws LoginUserWrongCredentialsException {
+    if (principal != null) {
+
+      LOGGER.info("User isn't authorized");
+      return new ImageUploadResponse(imageService.uploadFile(multipartFile));
+    }
     if (multipartFile.isEmpty()) {
       LOGGER.warn("Don't exist image for upload");
     }
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
-    LOGGER.info("User isn't authorized");
-    return new ImageUploadResponse(imageService.uploadFile(multipartFile));
+    throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse moderatePost(ModerationRequest req, Principal principal) {

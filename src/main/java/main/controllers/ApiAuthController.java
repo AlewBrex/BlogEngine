@@ -7,11 +7,11 @@ import main.api.request.RegisterRequest;
 import main.api.request.RestoreRequest;
 import main.api.request.change.ChangePasswordRequest;
 import main.exception.ContentNotAllowedException;
+import main.exception.LoginUserWrongCredentialsException;
 import main.service.CaptchaServiceImpl;
 import main.service.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -26,7 +26,7 @@ public class ApiAuthController {
     private final CaptchaServiceImpl captchaService;
 
     @PostMapping(value = "login")
-    public ResponseEntity login(@RequestBody LoginRequest loginRequest) throws UsernameNotFoundException {
+    public ResponseEntity login(@RequestBody LoginRequest loginRequest) throws LoginUserWrongCredentialsException {
         log.info("Get request api/auth/login");
         return new ResponseEntity<>(userServiceImpl.login(loginRequest), HttpStatus.OK);
     }
