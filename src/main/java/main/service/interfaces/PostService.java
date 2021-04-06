@@ -1,4 +1,3 @@
 package main.service.interfaces;
 
-public interface PostService {
-}
+public interface PostService {}

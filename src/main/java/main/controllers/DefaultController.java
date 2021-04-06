@@ -9,14 +9,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping("/")
 public class DefaultController {
 
-    @GetMapping()
-    public String index() {
-        return "index";
-    }
+  @GetMapping()
+  public String index() {
+    return "index";
+  }
 
-    @RequestMapping(method = {RequestMethod.OPTIONS, RequestMethod.GET},
-            value = "/**/{path:[^\\.]*}")
-    public String redirectToIndex() {
-        return "forward:/";
-    }
+  @RequestMapping(
+      method = {RequestMethod.OPTIONS, RequestMethod.GET},
+      value = "/**/{path:[^\\.]*}")
+  public String redirectToIndex() {
+    return "forward:/";
+  }
 }

@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @Data
 public class MvcConfig implements WebMvcConfigurer {
-  @Value("${user.upload_file.directory}")
+  @Value("${file.upload_directory}")
   private String pathLoad;
 
   @Override

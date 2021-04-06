@@ -15,17 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/")
 @RequiredArgsConstructor
 public class ApiTagController {
-    private final TagServiceImpl tagServiceImpl;
+  private final TagServiceImpl tagServiceImpl;
 
-    @GetMapping(value = "tag")
-    public ResponseEntity<?> getTags() {
-        log.info("Получен GET запрос api/tag");
-        return new ResponseEntity<>(tagServiceImpl.getAllTags(), HttpStatus.OK);
-    }
+  @GetMapping(value = "tag")
+  public ResponseEntity<?> getTags() {
+    log.info("Получен GET запрос api/tag");
+    return new ResponseEntity<>(tagServiceImpl.getAllTags(), HttpStatus.OK);
+  }
 
-    @GetMapping(value = "tag/", params = {"query"})
-    public ResponseEntity<?> getTagsWithParameters(@RequestParam(value = "query") String query) {
-        log.info("Получен GET запрос api/tag с параметром query");
-        return new ResponseEntity<>(tagServiceImpl.getTagsWithQuery(query), HttpStatus.OK);
-    }
+  @GetMapping(
+      value = "tag/",
+      params = {"query"})
+  public ResponseEntity<?> getTagsWithParameters(@RequestParam(value = "query") String query) {
+    log.info("Получен GET запрос api/tag с параметром query");
+    return new ResponseEntity<>(tagServiceImpl.getTagsWithQuery(query), HttpStatus.OK);
+  }
 }

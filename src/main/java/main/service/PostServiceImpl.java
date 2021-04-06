@@ -26,6 +26,7 @@ import main.model.User;
 import main.model.repository.*;
 import main.service.interfaces.ImageService;
 import main.service.interfaces.PostService;
+import main.service.interfaces.TagService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,12 +64,11 @@ public class PostServiceImpl implements PostService {
   private int maxLengthAnnounce;
 
   private final PostRepository postRepository;
-  private final TagRepository tagRepository;
   private final VoteRepository voteRepository;
   private final CommentRepository commentRepository;
-  private final GlobalSettingsRepository settingsRepository;
   private final UserRepository userRepository;
   private final ImageService imageService;
+  private final TagService tagService;
 
   public ResultResponse getPosts() {
     List<Post> list = postRepository.modeRecentAll();
@@ -165,36 +165,32 @@ public class PostServiceImpl implements PostService {
 
   public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal)
       throws LoginUserWrongCredentialsException {
-    List<Post> postResponseList = new ArrayList<>();
-    int countPosts = 0;
     if (principal != null) {
+      List<Post> postResponseList = new ArrayList<>();
+      int countPosts = 0;
       Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
       if (optionalUser.isPresent()) {
-        User user = optionalUser.get();
-        if (user.userModerator()) {
-          int userId = user.getId();
+        int userId = optionalUser.get().getId();
 
-          switch (status) {
-            case "inactive":
-              postResponseList.addAll(postRepository.listUserPostInactive(offset, limit, userId));
-              countPosts = postRepository.countPostInactive(userId);
-              break;
-            case "pending":
-              postResponseList.addAll(
-                  postRepository.listUserPostStatus(offset, limit, userId, "NEW"));
-              countPosts = postRepository.countPostStatus(userId, "NEW").orElse(0);
-              break;
-            case "declined":
-              postResponseList.addAll(
-                  postRepository.listUserPostStatus(offset, limit, userId, "DECLINED"));
-              countPosts = postRepository.countPostStatus(userId, "DECLINED").orElse(0);
-              break;
-            case "published":
-              postResponseList.addAll(
-                  postRepository.listUserPostStatus(offset, limit, userId, "ACCEPTED"));
-              countPosts = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
-              break;
-          }
+        switch (status) {
+          case "inactive":
+            postResponseList.addAll(postRepository.listUserPostInactive(offset, limit, userId));
+            countPosts = postRepository.countPostInactive(userId);
+            break;
+          case "pending":
+            postResponseList.addAll(postRepository.listUserPostsPending(offset, limit, userId));
+            countPosts = postRepository.countPostStatus(userId, "NEW").orElse(0);
+            break;
+          case "declined":
+            postResponseList.addAll(
+                postRepository.listUserPostStatus(offset, limit, userId, "DECLINED"));
+            countPosts = postRepository.countPostStatus(userId, "DECLINED").orElse(0);
+            break;
+          case "published":
+            postResponseList.addAll(
+                postRepository.listUserPostStatus(offset, limit, userId, "ACCEPTED"));
+            countPosts = postRepository.countPostStatus(userId, "ACCEPTED").orElse(0);
+            break;
         }
       }
       List<PostResponse> responseList = getListPostResponse(postResponseList);
@@ -207,8 +203,7 @@ public class PostServiceImpl implements PostService {
     Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
     if (principal != null) {
       Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
-      if (optionalUser.isPresent()
-          || (optionalUser.get().userModerator())
+      if ((optionalUser.get().userModerator())
           || (post.getUsers().getId() == optionalUser.get().getId())) {
         return getPostForUser(post);
       }
@@ -223,21 +218,7 @@ public class PostServiceImpl implements PostService {
     if (principal != null) {
       Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
       if (optionalUser.isPresent()) {
-        LocalDateTime localDateTime =
-                Instant.EPOCH
-                        .plus(req.getTimestamp(), ChronoUnit.DAYS)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime();
 
-        List<Tag> tagSet = new ArrayList<>();
-        for (String t : req.getTags()) {
-          if (!t.isBlank()) {
-            tagSet.add(tagRepository.getTagByName(t));
-          }
-        }
-        if (localDateTime.isAfter(LocalDateTime.now())) {
-          localDateTime = LocalDateTime.now();
-        }
         if (isTitleOk(req.getTitle())) {
           badResultResponse.addError("title", "Заголовок слишком короткий");
         }
@@ -251,10 +232,10 @@ public class PostServiceImpl implements PostService {
           Post post = new Post();
           post.setIsActive(req.getActive());
           post.setUsers(optionalUser.get());
-          post.setTime(localDateTime);
+          post.setTime(parseLocalDateTime(req.getTimestamp()));
           post.setTitle(req.getTitle());
           post.setText(req.getText());
-          post.setTags(tagSet);
+          post.setTags(tagService.getTagsForPost(req.getTags()));
           post.setModerationStatus(Post.ModerationStatus.NEW);
           postRepository.save(post);
           return new OkResultResponse();
@@ -262,7 +243,7 @@ public class PostServiceImpl implements PostService {
       }
       LOGGER.warn("User isn't authorized or user don't exist");
     }
-   throw new LoginUserWrongCredentialsException();
+    throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse editPost(int idPost, PostRequest req, Principal principal) {
@@ -274,15 +255,6 @@ public class PostServiceImpl implements PostService {
         User user = optionalUser.get();
         Post post = postRepository.getPostById(idPost).orElseThrow(NotPresentPost::new);
 
-        LocalDateTime localDateTime =
-            Instant.EPOCH
-                .plus(req.getTimestamp(), ChronoUnit.DAYS)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-
-        if (localDateTime.isAfter(LocalDateTime.now())) {
-          localDateTime = LocalDateTime.now();
-        }
         if (isTitleOk(req.getTitle())) {
           badResultResponse.addError("title", "Заголовок слишком короткий");
         }
@@ -293,22 +265,14 @@ public class PostServiceImpl implements PostService {
         if (!user.userModerator()) {
           LOGGER.warn("User isn't authorized or user don't exist");
 
-          List<Tag> tagSet = new ArrayList<>();
-          for (String t : req.getTags()) {
-            if (!t.isBlank()) {
-              Tag tag = tagRepository.getTagByName(t);
-              tagSet.add(tag);
-            }
-          }
-
           if (badResultResponse.hasErrors()) {
             return badResultResponse;
           } else {
             post.setIsActive(req.getActive());
             post.setTitle(req.getTitle());
             post.setText(req.getText());
-            post.setTime(localDateTime);
-            post.setTags(tagSet);
+            post.setTime(parseLocalDateTime(req.getTimestamp()));
+            post.setTags(tagService.getTagsForPost(req.getTags()));
             post.setModerationStatus(
                 user.userModerator() ? Post.ModerationStatus.ACCEPTED : Post.ModerationStatus.NEW);
             postRepository.save(post);
@@ -322,26 +286,21 @@ public class PostServiceImpl implements PostService {
 
   public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
       throws LoginUserWrongCredentialsException {
-    if (principal != null) {
 
-      LOGGER.info("User isn't authorized");
-      return new ImageUploadResponse(imageService.uploadFile(multipartFile));
-    }
     if (multipartFile.isEmpty()) {
       LOGGER.warn("Don't exist image for upload");
     }
+    if (principal != null) {
+      return new ImageUploadResponse(imageService.uploadFileAndResizeImage(multipartFile));
+    }
+    LOGGER.info("User isn't authorized");
     throw new LoginUserWrongCredentialsException();
   }
 
   public ResultResponse moderatePost(ModerationRequest req, Principal principal) {
     Post post = postRepository.getOne(req.getPostId());
     Optional<User> user = userRepository.getByEmail(principal.getName());
-
-    if (post == null || !user.isPresent() || !user.get().userModerator()) {
-      LOGGER.warn("Post don't exist");
-      LOGGER.warn("User isn't authorized or user don't exist");
-      return new FalseResultResponse();
-    } else {
+    if (user.isPresent() && user.get().userModerator()) {
       post.setModeratorId(user.get().getId());
       post.setModerationStatus(
           req.getDecision().equals("ACCEPTED")
@@ -350,6 +309,8 @@ public class PostServiceImpl implements PostService {
       postRepository.save(post);
       return new OkResultResponse();
     }
+    LOGGER.warn("User isn't authorized or user don't exist");
+    return new FalseResultResponse();
   }
 
   public CalendarResponse postsByCalendar(Integer year) {
@@ -399,9 +360,7 @@ public class PostServiceImpl implements PostService {
   }
 
   private FullInformPost getPostForUser(Post post) {
-    if (post.activePost()
-        || post.getModerationStatus().equals(Post.ModerationStatus.ACCEPTED)
-        || post.getTime().isBefore(LocalDateTime.now())) {
+    if (post.activePost() || post.getTime().isBefore(LocalDateTime.now())) {
       postRepository.save(post);
       return new FullInformPost(
           post.getId(),
@@ -456,5 +415,13 @@ public class PostServiceImpl implements PostService {
 
   private Boolean isTextOk(String text) {
     return text.isBlank() || text.length() < minLengthText || text.length() > maxLengthText;
+  }
+
+  private LocalDateTime parseLocalDateTime(long time) {
+    LocalDateTime newTime =
+        Instant.EPOCH.plus(time, ChronoUnit.DAYS).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    newTime = newTime.isAfter(LocalDateTime.now()) ? LocalDateTime.now() : newTime;
+
+    return newTime;
   }
 }

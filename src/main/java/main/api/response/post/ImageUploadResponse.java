@@ -9,5 +9,5 @@ import main.api.response.ResultResponse;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ImageUploadResponse implements ResultResponse {
-    private String pathUpload;
+  private String pathUpload;
 }

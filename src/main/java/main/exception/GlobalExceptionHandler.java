@@ -23,35 +23,35 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(value = {LoginUserWrongCredentialsException.class, IllegalStateException.class})
   protected ResponseEntity<ResultResponse> handleWrongCredentials(
-      LoginUserWrongCredentialsException ex, WebRequest request) {
+      LoginUserWrongCredentialsException ex, WebRequest webRequest) {
     LOGGER.info(ex.getMessage());
     return ResponseEntity.ok(new FalseResultResponse());
   }
 
-  @ExceptionHandler(value = {WrongParameterException.class})
+  @ExceptionHandler(value = WrongParameterException.class)
   protected ResponseEntity<ResultResponse> handleBlockStatistic(
-      WrongParameterException ex, WebRequest request) {
+      WrongParameterException ex, WebRequest webRequest) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
-  @ExceptionHandler(value = {EmptyTextComment.class})
+  @ExceptionHandler(value = EmptyTextComment.class)
   protected ResponseEntity<ResultResponse> handleSendComment(
-      EmptyTextComment ex, WebRequest request) {
+      EmptyTextComment ex, WebRequest webRequest) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(value = {NotPresentPost.class})
+  @ExceptionHandler(value = NotPresentPost.class)
   protected ResponseEntity<ResultResponse> handleFindPostById(
-      NotPresentPost ex, WebRequest request) {
+      NotPresentPost ex, WebRequest webRequest) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
-  @ExceptionHandler(value = {UpSizeAtUploadImage.class})
+  @ExceptionHandler(value = UpSizeAtUploadImage.class)
   protected ResponseEntity<ResultResponse> handleUploadImage(
-      UpSizeAtUploadImage ex, WebRequest request) {
+      UpSizeAtUploadImage ex, WebRequest webRequest) {
     LOGGER.info(ex.getMessage());
     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
   }

@@ -9,21 +9,21 @@ import java.util.Properties;
 
 @Configuration
 public class MailConfig {
-    @Bean
-    public JavaMailSender javaMailSender() {
-        JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
-        javaMailSender.setHost("myHost");
-        javaMailSender.setPort(25);
-        javaMailSender.setJavaMailProperties(getMailProperties());
-        return javaMailSender;
-    }
+  @Bean
+  public JavaMailSender javaMailSender() {
+    JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
+    javaMailSender.setHost("myHost");
+    javaMailSender.setPort(25);
+    javaMailSender.setJavaMailProperties(getMailProperties());
+    return javaMailSender;
+  }
 
-    private Properties getMailProperties() {
-        Properties properties = new Properties();
-        properties.setProperty("mail.transport.protocol", "smtp");
-        properties.setProperty("mail.smtp.auth", "false");
-        properties.setProperty("mail.smtp.starttls.enable", "false");
-        properties.setProperty("mail.debug", "false");
-        return properties;
-    }
+  private Properties getMailProperties() {
+    Properties properties = new Properties();
+    properties.setProperty("mail.transport.protocol", "smtp");
+    properties.setProperty("mail.smtp.auth", "false");
+    properties.setProperty("mail.smtp.starttls.enable", "false");
+    properties.setProperty("mail.debug", "false");
+    return properties;
+  }
 }

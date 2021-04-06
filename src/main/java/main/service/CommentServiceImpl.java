@@ -10,6 +10,7 @@ import main.api.response.result.BadResultResponse;
 import main.exception.EmptyTextComment;
 import main.exception.LoginUserWrongCredentialsException;
 import main.exception.NotPresentPost;
+import main.exception.UpSizeAtUploadImage;
 import main.model.Comment;
 import main.model.Post;
 import main.model.User;
@@ -17,6 +18,7 @@ import main.model.repository.CommentRepository;
 import main.model.repository.PostRepository;
 import main.model.repository.UserRepository;
 import main.service.interfaces.CommentService;
+import main.service.interfaces.ImageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -44,9 +46,10 @@ public class CommentServiceImpl implements CommentService {
   private final CommentRepository commentRepository;
   private final PostRepository postRepository;
   private final UserRepository userRepository;
+  private final ImageService imageService;
 
   public ResultResponse addComment(CommentRequest req, Principal principal)
-      throws LoginUserWrongCredentialsException, EmptyTextComment {
+      throws LoginUserWrongCredentialsException, EmptyTextComment, UpSizeAtUploadImage {
     BadResultResponse badResultResponse = new BadResultResponse();
     User user = null;
     if (principal == null) {
@@ -70,6 +73,10 @@ public class CommentServiceImpl implements CommentService {
     if (commentParent == null && post == null) {
       LOGGER.warn("Don't exist parent comment or post");
       throw new EmptyTextComment();
+    }
+
+    if (req.getPhoto() != null) {
+      imageService.uploadFileAndResizeImage(req.getPhoto());
     }
     Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
     commentRepository.save(newComment);

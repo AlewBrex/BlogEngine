@@ -1,20 +1,20 @@
-INSERT INTO blogengine.users VALUES
-(1, 0, "2017-01-14 14:57:00", "Чернов Игорь", "chernov@mail.ru", "NFnu82vBb877cihuhu42dMck89aapcqoHFfqb", null, null),
-(2, 0, "2017-08-19 17:24:00", "Сапогов Ричард", "sapogov@mail.ru", "NFnuJj96fvHtftf2fF7bwvjk89aapcqoHFfqb", null, null),
-(3, 0, "2017-10-23 02:33:00", "Жирнов Гога", "goga-jir@mail.ru", "L94nVHhf8rydjjhv772fbGyHbf7a9fbVBusuv3", null, null),
-(4, 1, "2017-03-09 08:44:00", "Федосеев Остап", "fedoseev@mail.ru", "Rhbv93vbyfkw322vmscd948gnsbu27cd4444", null, null),
-(5, 0, "2017-05-12 13:01:00", "Соловьев Никита", "solov-nik@mail.ru", "vovo983428vds72ygv8ssvg23fgYGUKfv227fs", null, null),
-(6, 0, "2017-04-16 10:15:00", "Копыткин Валерий", "kop-valera@mail.ru", "8HbfuUGYVh3355bVljvkHf72bs9djfn2", null, null),
-(7, 1, "2017-09-03 12:21:00", "Баранов Илья", "baranov@mail.ru", "H3n9sqofpgnw3gfGGE72gjYGUF7fwqqM9vbsf", null, null);
+INSERT INTO users VALUES
+(1, 0, "2017-01-14 14:57:00", "Чернов Игорь", "chernov@mail.ru", "$2y$12$./YaPoVjsa6WlSgUc6tOR.fDdOPoBHWEJfvO5j8kf1EHqJ2Wmk.Bq", null, null),
+(2, 0, "2017-08-19 17:24:00", "Сапогов Ричард", "sapogov@mail.ru", "$2y$12$sKcS4qLlyfbNoXNX1dfhR.zfAgFOTEDS7AmhiSasjiVGaQ.XJcgE6", null, null),
+(3, 0, "2017-10-23 02:33:00", "Жирнов Гога", "goga-jir@mail.ru", "$2y$12$NuDQfJvnMnZn51L9.Ao8r.VTRhCYWjgZuQXjAFLIHc9gLAgYQq92e", null, null),
+(4, 1, "2017-03-09 08:44:00", "Федосеев Остап", "fedoseev@mail.ru", "$2y$12$/N24X3nlfIlgfLndRaN.sOmQngWu0qvDzLTCgCNBY.R0A6sKt3bh.", null, null),
+(5, 0, "2017-05-12 13:01:00", "Соловьев Никита", "solov-nik@mail.ru", "$2y$12$zScSSDhDK2HeUOQLgodCK.jbvHbIAVOFvgiXWb2pkDeoQviO4MCMK", null, null),
+(6, 0, "2017-04-16 10:15:00", "Копыткин Валерий", "kop-valera@mail.ru", "$2y$12$Rlpyh0gVfiRRWSD41ZRmpO/GN1sAtmlL7Xa5twB/Qy/X2sx036Uwq", null, null),
+(7, 1, "2017-09-03 12:21:00", "Баранов Илья", "baranov@mail.ru", "$2y$12$1XQ9Nc0ZFZsHheEUJ2/aeeCwhFlQCVKI2Bggl0OvZTgCplsBz0x2W", null, null);
 
-INSERT INTO blogengine.tags VALUES
+INSERT INTO tags VALUES
 (1, "Java"),
 (2, "Spring"),
 (3, "HTML"),
 (4, "Git"),
 (5, "MongoDB");
 
-INSERT INTO blogengine.posts VALUES
+INSERT INTO posts VALUES
 (1, 0, "NEW", null, 6, "2018-11-04 12:32:00", "Что нового будет в Java 14", "Сопоставление шаблонов позволяет выражать обычную логику «кратко и безопасно». Согласно документации OpenJDK, сейчас существуют только специализированные решения для сопоставления шаблонов, поэтому авторы посчитали, что пришло время существенно расширить использование сопоставления шаблонов в Java.", 15),
 (2, 1, "ACCEPTED", 7, 7, "2018-06-04 03:41:00", "Приёмы и хитрости начинающего Java-программиста", "Для конкатенации (сложения) строк в Java используется оператор «+», для примера, в цикле for новый объект может создаваться для каждой новой строки, что приводит к потере памяти и увеличению времени работы программы.", 23),
 (3, 1, "DECLINED", 4, 1, "2018-01-23 09:24:00", "Передовой опыт тестирования в Java", "Ещё пару тестов, проверяющих особые случаи или особую бизнес-логику, например что определённые значения в ответе вычислены корректно.", 42),
@@ -25,10 +25,10 @@ INSERT INTO blogengine.posts VALUES
 (8, 1, "DECLINED", 4, 2, "2018-01-17 22:15:00", "Знакомство с Spring Data MongoDB", "Чтобы использовать конфигурацию MongoDB, нам нужно реализовать класс AbstractMongoConfiguration.Класс MongoConfig.java будет выглядеть так, как показано ниже. Здесь мы используем аннотации вместо xml.", 37),
 (9, 1, "NEW", null, 3, "2018-05-09 00:48:00", "14 вещей, которые я хотел бы знать перед началом работы с MongoDB", "Забыв о порядке сортировки можно сильнее всего разочароваться и потерять больше времени, чем при использовании любой другой неправильной конфигурации. По умолчанию MongoBD использует бинарную сортировку.", 50),
 (10, 1, "DECLINED", 4, 1, "2018-04-12 18:58:00", "Руководство по выживанию с MongoDB", "Мы узнали об этом, когда собирались перестроить индекс, а так как нам нужно было снять с индекса уникальность, то процедура проходила в несколько этапов. В MongoDB нельзя построить рядом с индексом такой же, но без уникальности. ", 61),
-(11, 1, "ACCEPTED", 7, 4, "2018-02-23 13:37:00", "Внутреннее устройство Git: хранение данных и merge", "Теперь нам нужно выполнить git merge topic, находясь в ветке master. Мы могли бы выбрать коммит E как общего предка, но Git со стратегией recursive делает иначе.", 48),
+(11, 1, "ACCEPTED", 7, 4, "2018-02-27 13:37:00", "Внутреннее устройство Git: хранение данных и merge", "Теперь нам нужно выполнить git merge topic, находясь в ветке master. Мы могли бы выбрать коммит E как общего предка, но Git со стратегией recursive делает иначе.", 48),
 (12, 0, "ACCEPTED", 7, 3, "2018-01-16 11:44:00", "Семантика в HTML 5", "Вот еще один пример. Все более очевидно, что в HTML не хватает представления машино-читаемого значения понятным для человека, например даты. Это лежит в основе проблемы BBC с микроформатом hCalendar, о ней мы говорили ранее.", 11);
 
-INSERT INTO blogengine.post_comments VALUES
+INSERT INTO post_comments VALUES
 (1, null, 6, 3, "2019-08-25 19:13:00", "Будем помалкивать и продвигать свои идеи без лишнего шумка."),
 (2, null, 11, 5, "2019-08-04 16:24:00", "И именно в сторону качественного улучшения механизмов представления движется HTML 5."),
 (3, null, 3, 1, "2019-09-13 03:57:00", "Возможно, есть в планах сделать скрипт, которые будет в автоматическом режиме собирать данные о проектах с github'a и других источников."),
@@ -37,7 +37,7 @@ INSERT INTO blogengine.post_comments VALUES
 (6, null, 1, 4, "2019-09-09 09:43:00", "В том то и дело что в рамках поставленной задачи нужен не мгновенный срез."),
 (7, null, 2, 6, "2019-08-15 18:36:00", "Статья замечательная и очень подробная.");
 
-INSERT INTO blogengine.tag2post VALUES
+INSERT INTO tag2post VALUES
 (1, 1, 1),
 (2, 1, 4),
 (3, 2, 1),
@@ -57,7 +57,7 @@ INSERT INTO blogengine.tag2post VALUES
 (17, 12, 1),
 (18, 12, 3);
 
-INSERT INTO blogengine.post_votes VALUES
+INSERT INTO post_votes VALUES
 (1, 4, 1, "2020-09-20 00:11:01", 1),
 (2, 7, 1, "2020-09-20 00:11:02", 1),
 (3, 1, 1, "2020-09-20 00:11:03", 1),
@@ -110,7 +110,7 @@ INSERT INTO blogengine.post_votes VALUES
 (50, 6, 12, "2020-09-20 00:11:50", 1),
 (51, 3, 12, "2020-09-20 00:11:51", 1);
 
-INSERT INTO blogengine.global_settings VALUES
+INSERT INTO global_settings VALUES
 (1, "MULTIUSER_MODE", "Многопользовательский режим", "YES"),
 (2, "POST_PREMODERATION", "Премодерация постов", "YES"),
 (3, "STATISTICS_IS_PUBLIC", "Показывать всем статистику блога", "YES");

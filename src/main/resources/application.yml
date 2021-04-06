@@ -33,14 +33,6 @@ captcha:
     width: 100 #px
 
 user:
-  upload_file:
-    root_folder: images
-    directory: upload
-    avatars_folder: avatars
-    format: jpg
-    height: 36 #px
-    width: 36 #px
-    size: 5_000_000 #bytes
   email:
     valid_reg: "[\\D\\d]+@[\\D\\d*\\u002E]+[\\D]"
   password:
@@ -54,11 +46,14 @@ comment:
   min_length: 50
   max_length: 5000
 
+file:
+  size: 5_242_880 #bytes
+  upload_directory: upload
+  format: png
+  height: 36 #px
+  width: 36 #px
+
 post:
-  upload_file:
-    root_folder: images
-    directory: upload
-    format: jpg
   title:
     min_length: 3
     max_length: 300

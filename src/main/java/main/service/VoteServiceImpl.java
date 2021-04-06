@@ -57,23 +57,27 @@ public class VoteServiceImpl implements VoteService {
 
         LOGGER.info("User isn't authorized");
         Vote vote = voteRepository.getVoteByUserAndPost(user.getId(), post.getId());
-
-        if (vote == null || vote.getValue() != voteValue) {
-          voteRepository.delete(vote);
-          getNewVote(user, post, voteValue);
+        if (vote != null) {
+          if (vote.getValue() != voteValue) {
+            voteRepository.delete(vote);
+          }
+          if (vote.getValue() == voteValue) {
+            return false;
+          }
         }
+        voteRepository.save(createNewVote(user, post, voteValue));
+        return true;
       }
     }
     return false;
   }
 
-  private Boolean getNewVote(User user, Post post, Integer vote) {
+  private Vote createNewVote(User user, Post post, Integer vote) {
     Vote firstVote = new Vote();
     firstVote.setUsers(user);
     firstVote.setPost(post);
     firstVote.setTime(LocalDateTime.now());
     firstVote.setValue(vote);
-    voteRepository.save(firstVote);
-    return true;
+    return firstVote;
   }
 }

@@ -17,67 +17,69 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Post {
-    @Id
-    @NotNull
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+  @Id
+  @NotNull
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int id;
 
-    @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT")
-    private int isActive;
+  @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT")
+  private int isActive;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "moderation_status", nullable = false, columnDefinition = "enum default 'NEW'")
-    private ModerationStatus moderationStatus;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "moderation_status", nullable = false, columnDefinition = "enum default 'NEW'")
+  private ModerationStatus moderationStatus;
 
-    @JoinColumn(name = "moderator_id", columnDefinition = "INT")
-    private Integer moderatorId;
+  @JoinColumn(name = "moderator_id", columnDefinition = "INT")
+  private Integer moderatorId;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User users;
+  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+  @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
+  private User users;
 
-    @Column(nullable = false, columnDefinition = "DATETIME")
-    private LocalDateTime time;
+  @Column(nullable = false, columnDefinition = "DATETIME")
+  private LocalDateTime time;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
-    private String title;
+  @Column(nullable = false, columnDefinition = "VARCHAR(255)")
+  private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String text;
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String text;
 
-    @Column(name = "view_count", nullable = false, columnDefinition = "INT")
-    private int viewCount;
+  @Column(name = "view_count", nullable = false, columnDefinition = "INT")
+  private int viewCount;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "tag2post", joinColumns = {@JoinColumn(name = "post_id")},
-            inverseJoinColumns = {@JoinColumn(name = "tag_id")})
-    private List<Tag> tags;
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+      name = "tag2post",
+      joinColumns = {@JoinColumn(name = "post_id")},
+      inverseJoinColumns = {@JoinColumn(name = "tag_id")})
+  private List<Tag> tags;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @Column(nullable = false)
-    private List<Comment> comments;
+  @OneToMany(fetch = FetchType.LAZY)
+  @Column(nullable = false)
+  private List<Comment> comments;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @Column(nullable = false)
-    private List<Vote> votes;
+  @OneToMany(fetch = FetchType.LAZY)
+  @Column(nullable = false)
+  private List<Vote> votes;
 
-    public Post(int isActive, User users, LocalDateTime time,
-                String title, String text, List<Tag> tags) {
-        this.isActive = isActive;
-        this.users = users;
-        this.time = time;
-        this.title = title;
-        this.text = text;
-        this.tags = tags;
-    }
+  public Post(
+      int isActive, User users, LocalDateTime time, String title, String text, List<Tag> tags) {
+    this.isActive = isActive;
+    this.users = users;
+    this.time = time;
+    this.title = title;
+    this.text = text;
+    this.tags = tags;
+  }
 
-    public Boolean activePost() {
-        return isActive == 1;
-    }
+  public Boolean activePost() {
+    return isActive == 1;
+  }
 
-    public enum ModerationStatus {
-        NEW,
-        ACCEPTED,
-        DECLINED
-    }
+  public enum ModerationStatus {
+    NEW,
+    ACCEPTED,
+    DECLINED
+  }
 }

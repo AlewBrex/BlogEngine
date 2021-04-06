@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 @Repository
 public interface CaptchaCodeRepository extends JpaRepository<CaptchaCode, Integer> {
 
-    @Query(value = "SELECT * FROM captcha_codes AS c_c WHERE c_c.secret_code = ?", nativeQuery = true)
-    CaptchaCode getCaptchaCodeBySecretCode(String secretCode);
+  @Query(value = "SELECT * FROM captcha_codes AS c_c WHERE c_c.secret_code = ?", nativeQuery = true)
+  CaptchaCode getCaptchaCodeBySecretCode(String secretCode);
 
-    @Modifying
-    @Transactional
-    @Query(value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < ?", nativeQuery = true)
-    void deleteCaptcha(LocalDateTime localDateTime);
+  @Modifying
+  @Transactional
+  @Query(value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < ?", nativeQuery = true)
+  void deleteCaptcha(LocalDateTime localDateTime);
 }

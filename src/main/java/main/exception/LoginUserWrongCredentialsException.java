@@ -1,3 +1,4 @@
 package main.exception;
 
-public class LoginUserWrongCredentialsException extends RuntimeException {}
+public class LoginUserWrongCredentialsException extends RuntimeException {
+}

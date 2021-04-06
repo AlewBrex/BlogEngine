@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class CountPostResponse implements ResultResponse {
-    private int count;
-    private List<PostResponse> posts;
+  private int count;
+  private List<PostResponse> posts;
 }

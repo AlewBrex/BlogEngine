@@ -8,5 +8,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class FullInformTagResponse {
-    private List<TagResponse> tags;
+  private List<TagResponse> tags;
 }

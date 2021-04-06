@@ -1,4 +1,3 @@
 package main.service.interfaces;
 
-public interface SettingsService {
-}
+public interface SettingsService {}

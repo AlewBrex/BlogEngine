@@ -10,18 +10,18 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    @Query(value = "SELECT * FROM users AS u WHERE u.id = ?1", nativeQuery = true)
-    User getById(Integer id);
+  @Query(value = "SELECT * FROM users AS u WHERE u.id = ?1", nativeQuery = true)
+  User getById(Integer id);
 
-    @Query(value = "SELECT * FROM users u WHERE u.name = ?", nativeQuery = true)
-    User getByName(String name);
+  @Query(value = "SELECT * FROM users u WHERE u.name = ?", nativeQuery = true)
+  User getByName(String name);
 
-    @Query(value = "SELECT * FROM users u WHERE u.email = ?", nativeQuery = true)
-    Optional<User> getByEmail(String email);
+  @Query(value = "SELECT * FROM users u WHERE u.email = ?", nativeQuery = true)
+  Optional<User> getByEmail(String email);
 
-    @Query(value = "SELECT COUNT(*) FROM users u WHERE u.email = ?", nativeQuery = true)
-    Integer existEmailOrNot(String email);
+  @Query(value = "SELECT COUNT(*) FROM users u WHERE u.email = ?", nativeQuery = true)
+  Integer existEmailOrNot(String email);
 
-    @Query(value = "SELECT * FROM users u WHERE u.code = ?", nativeQuery = true)
-    Optional<User> findByCode(String code);
+  @Query(value = "SELECT * FROM users u WHERE u.code = ?", nativeQuery = true)
+  Optional<User> findByCode(String code);
 }

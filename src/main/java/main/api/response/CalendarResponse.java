@@ -9,6 +9,6 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 public class CalendarResponse {
-    private List<Integer> years;
-    private Map<String, Integer> posts;
+  private List<Integer> years;
+  private Map<String, Integer> posts;
 }

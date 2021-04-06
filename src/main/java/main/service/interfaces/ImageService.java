@@ -1,11 +1,12 @@
 package main.service.interfaces;
 
+import lombok.SneakyThrows;
+import main.exception.UpSizeAtUploadImage;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface ImageService {
-    String uploadFile(MultipartFile multipartFile);
+  @SneakyThrows
+  String uploadFileAndResizeImage(MultipartFile multipartFile) throws UpSizeAtUploadImage;
 
-    String resizeImage(MultipartFile multipartFile);
-
-    void deletePhoto(String path);
+  void deletePhoto(String path);
 }

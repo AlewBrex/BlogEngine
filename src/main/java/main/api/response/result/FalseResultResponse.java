@@ -7,5 +7,5 @@ import main.api.response.ResultResponse;
 @Data
 @RequiredArgsConstructor
 public class FalseResultResponse implements ResultResponse {
-    private final boolean result = false;
+  private final boolean result = false;
 }

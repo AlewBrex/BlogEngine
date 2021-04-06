@@ -9,11 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequest {
-    @JsonProperty("e_mail")
-    private String email;
-    private String password;
-    private String name;
-    private String captcha;
-    @JsonProperty("captcha_secret")
-    private String captchaSecret;
+  @JsonProperty("e_mail")
+  private String email;
+
+  private String password;
+  private String name;
+  private String captcha;
+
+  @JsonProperty("captcha_secret")
+  private String captchaSecret;
 }

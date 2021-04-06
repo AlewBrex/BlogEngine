@@ -15,7 +15,6 @@ import main.api.response.result.FalseResultResponse;
 import main.api.response.result.LoginResultResponse;
 import main.api.response.result.OkResultResponse;
 import main.api.response.user.AllUserInformationResponse;
-import main.api.response.user.UserWithPhotoResponse;
 import main.config.MailConfig;
 import main.exception.ContentNotAllowedException;
 import main.exception.LoginUserWrongCredentialsException;
@@ -72,7 +71,7 @@ public class UserServiceImpl implements UserService {
   @Value("${user.password.algorithm_string}")
   private String algorithmString;
 
-  @Value("${user.upload_file.size}")
+  @Value("${file.size}")
   private int maxSizeForFile;
 
   private char[] alphabetAndDigits = "ab1cd2ef3g45hij6klm7no8pq9rst0uvwxyz".toCharArray();
@@ -112,12 +111,12 @@ public class UserServiceImpl implements UserService {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(email, password));
 
-    if (auth == null) {
+    if (!auth.isAuthenticated()) {
       return new FalseResultResponse();
     }
     SecurityContextHolder.getContext().setAuthentication(auth);
     org.springframework.security.core.userdetails.User user =
-            (org.springframework.security.core.userdetails.User) auth.getPrincipal();
+        (org.springframework.security.core.userdetails.User) auth.getPrincipal();
     User currentUser = getCurrentUserByEmail(user.getUsername());
     return new LoginResultResponse(getAllUserInformation(currentUser));
   }
@@ -245,10 +244,14 @@ public class UserServiceImpl implements UserService {
   public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
-    User user =
-        userRepository
-            .getByEmail(principal.getName())
-            .orElseThrow(LoginUserWrongCredentialsException::new);
+    User user = null;
+    if (principal == null) {
+      throw new LoginUserWrongCredentialsException();
+    }
+    Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
+    if (optionalUser.isPresent()) {
+      user = optionalUser.get();
+    }
 
     String nameUserHttpSession = user.getName();
     String emailUserHttpSession = user.getEmail();
@@ -267,16 +270,14 @@ public class UserServiceImpl implements UserService {
 
     if (change.getPassword() != null) {
       if (isPasswordValid(change.getPassword())) {
-        user.setPassword(passwordEncoder.encode(change.getPassword()));
-      } else {
         badResultResponse.addError("password", "Слишком короткий пароль");
       }
+      user.setPassword(passwordEncoder.encode(change.getPassword()));
     }
 
     if (change.getRemovePhoto() != null && change.getPhoto() != null) {
       if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
-        imageService.deletePhoto(user.getPhoto());
-        user.setPhoto(imageService.resizeImage(change.getPhoto()));
+        user.setPhoto(imageService.uploadFileAndResizeImage(change.getPhoto()));
       } else {
         badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
       }
@@ -303,7 +304,9 @@ public class UserServiceImpl implements UserService {
 
   private AllUserInformationResponse getAllUserInformation(User user) {
     return new AllUserInformationResponse(
-        new UserWithPhotoResponse(user.getId(), user.getName(), user.getPhoto()),
+        user.getId(),
+        user.getName(),
+        user.getPhoto(),
         user.getEmail(),
         user.userModerator(),
         user.userModerator()

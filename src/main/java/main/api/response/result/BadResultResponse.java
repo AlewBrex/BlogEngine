@@ -21,6 +21,7 @@ public class BadResultResponse implements ResultResponse {
     this.result = false;
     errors.put(object, message);
   }
+
   public BadResultResponse() {
     this.result = false;
   }

@@ -9,8 +9,8 @@ import main.api.response.user.UserWithPhotoResponse;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentResponse {
-    private int id;
-    private long timestamp;
-    private String text;
-    private UserWithPhotoResponse user;
+  private int id;
+  private long timestamp;
+  private String text;
+  private UserWithPhotoResponse user;
 }

@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import main.exception.UpSizeAtUploadImage;
 import main.service.interfaces.ImageService;
+import org.apache.commons.io.FilenameUtils;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,31 +24,24 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-  @Value("${user.upload_file.root_folder}")
-  private String rootPathImage;
+//  @Value("${file.upload_directory}")
+  private final String loadPathImage = "upload";
 
-  @Value("${user.upload_file.directory}")
-  private String loadPathImage;
-
-  @Value("${user.upload_file.avatars_folder}")
-  private String pathForAvatars;
-
-  @Value("${user.upload_file.format}")
+  @Value("${file.format}")
   private String formatFile;
 
-  @Value("${user.upload_file.height}")
+  @Value("${file.height}")
   private int heightImage;
 
-  @Value("${user.upload_file.width}")
+  @Value("${file.width}")
   private int widthImage;
 
-  @Value("${user.upload_file.size}")
+  @Value("${file.size}")
   private int sizeImage;
 
-  private char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-  private char[] digits = "1234567890".toCharArray();
-  private String pathUploadImage = rootPathImage + "/" + loadPathImage + "/";
-  private String pathResizeImage = pathUploadImage + pathForAvatars + "/";
+  private final char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+  private final char[] digits = "1234567890".toCharArray();
+  private final String pathResizeImage = loadPathImage + "/";
 
   public String generateDirectory() {
     StringBuilder stringBuilder = new StringBuilder();
@@ -59,8 +54,7 @@ public class ImageServiceImpl implements ImageService {
         stringBuilder.append("/");
       }
     }
-    String result = pathUploadImage + stringBuilder.toString();
-    return result;
+    return pathResizeImage + stringBuilder.toString();
   }
 
   public String generateName() {
@@ -70,41 +64,30 @@ public class ImageServiceImpl implements ImageService {
       stringBuilder.append(digits[s]);
     }
     stringBuilder.append(".jpg");
-    String result = stringBuilder.toString();
-    return result;
+    return stringBuilder.toString();
   }
 
-  @SneakyThrows
   @Override
-  public String resizeImage(MultipartFile multipartFile) {
-    String pathImage = generateName();
-    String pathUpload = pathResizeImage;
-    Path path = Paths.get(pathUpload, pathImage);
-    while (Files.exists(path)) {
-      pathImage = generateName();
-      path = Paths.get(pathUpload, pathImage);
-    }
-    BufferedImage newImage = ImageIO.read(new ByteArrayInputStream(multipartFile.getBytes()));
-    BufferedImage bufferedImage = Scalr.resize(newImage, widthImage, heightImage);
-    ImageIO.write(bufferedImage, formatFile, path.toFile());
-    return path.toString();
-  }
-
   @SneakyThrows
-  @Override
-  public String uploadFile(MultipartFile multipartFile) throws UpSizeAtUploadImage {
-    if (multipartFile.getSize() > sizeImage) {
+  public String uploadFileAndResizeImage(MultipartFile multipartFile) throws UpSizeAtUploadImage {
+    if (multipartFile.getSize() > sizeImage || multipartFile.isEmpty()) {
       throw new UpSizeAtUploadImage("Размер файла превышает допустимый размер");
     }
-    String pathImage = generateName();
-    String pathDirectory = generateDirectory();
-    Path path = Paths.get(pathDirectory, pathImage);
-    while (Files.exists(path)) {
-      pathImage = generateName();
-      path = Paths.get(pathDirectory, pathImage);
+    String extension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+    assert extension != null;
+    if (extension.equals("jpg") || extension.equals("png")) {
+      String pathImage = generateName();
+      String pathUpload = generateDirectory();
+      String path = (pathUpload + "/" + pathImage).replaceAll("\\\\", "/");
+      Path path1 = Paths.get(pathUpload, pathImage);
+      boolean p = new File(pathUpload).mkdirs();
+      Files.createFile(path1);
+      BufferedImage newImage = ImageIO.read(new ByteArrayInputStream(multipartFile.getBytes()));
+      BufferedImage bufferedImage = Scalr.resize(newImage, widthImage, heightImage);
+      ImageIO.write(bufferedImage, formatFile, path1.toFile());
+      return path;
     }
-    multipartFile.transferTo(path);
-    return path.toString();
+    return null;
   }
 
   @SneakyThrows

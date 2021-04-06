@@ -16,29 +16,29 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Vote {
-    @Id
-    @NotNull
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+  @Id
+  @NotNull
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int id;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
-    private User users;
+  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false, columnDefinition = "INT")
+  private User users;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false, columnDefinition = "INT")
-    private Post post;
+  @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id", nullable = false, columnDefinition = "INT")
+  private Post post;
 
-    @Column(nullable = false, columnDefinition = "DATETIME")
-    private LocalDateTime time;
+  @Column(nullable = false, columnDefinition = "DATETIME")
+  private LocalDateTime time;
 
-    @Column(nullable = false, columnDefinition = "TINYINT")
-    private int value;
+  @Column(nullable = false, columnDefinition = "TINYINT")
+  private int value;
 
-    public Vote(User users, Post post, LocalDateTime time, int value) {
-        this.users = users;
-        this.post = post;
-        this.time = time;
-        this.value = value;
-    }
+  public Vote(User users, Post post, LocalDateTime time, int value) {
+    this.users = users;
+    this.post = post;
+    this.time = time;
+    this.value = value;
+  }
 }

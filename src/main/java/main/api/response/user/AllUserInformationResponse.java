@@ -8,9 +8,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AllUserInformationResponse {
-    private UserWithPhotoResponse user;
-    private String email;
-    private boolean moderation;
-    private int moderationCount;
-    private boolean settings;
+  private int id;
+  private String name;
+  private String photo;
+  private String email;
+  private boolean moderation;
+  private int moderationCount;
+  private boolean settings;
 }
