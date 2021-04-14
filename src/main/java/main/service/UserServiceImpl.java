@@ -277,7 +277,7 @@ public class UserServiceImpl implements UserService {
 
     if (change.getRemovePhoto() != null && change.getPhoto() != null) {
       if (change.getRemovePhoto() == 0 && change.getPhoto().getSize() < maxSizeForFile) {
-        user.setPhoto(imageService.uploadFileAndResizeImage(change.getPhoto()));
+        user.setPhoto(imageService.uploadFileAndResizeImage(change.getPhoto(), true));
       } else {
         badResultResponse.addError("photo", "Фото слишком большое, нужно не более 5 Мб");
       }

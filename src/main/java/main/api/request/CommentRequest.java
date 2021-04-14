@@ -29,4 +29,14 @@ public class CommentRequest {
     this.text = text;
     this.photo = photo;
   }
+
+  public CommentRequest(MultipartFile photo) {
+    this.photo = photo;
+  }
+
+  public CommentRequest(int postId, String text, MultipartFile photo) {
+    this.postId = postId;
+    this.text = text;
+    this.photo = photo;
+  }
 }
