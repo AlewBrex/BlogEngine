@@ -51,9 +51,9 @@ public class ApiGeneralController {
   }
 
   @PostMapping(value = "image")
-  public ResponseEntity uploadImage(@RequestParam MultipartFile multipartFile) {
+  public ResponseEntity uploadImage(@RequestParam MultipartFile image) {
     log.info("Получен POST запрос api/image");
-    return new ResponseEntity<>(imageServiceImpl.uploadFileAndResizeImage(multipartFile), HttpStatus.OK);
+    return new ResponseEntity<>(imageServiceImpl.uploadFileAndResizeImage(image, false), HttpStatus.OK);
   }
 
   @PostMapping(value = "comment")
@@ -65,14 +65,14 @@ public class ApiGeneralController {
         commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
   }
 
-  @PostMapping(value = "comment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<?> addCommentMultipartFile(
-          @RequestBody CommentRequest commentRequest, Principal principal)
-          throws ContentNotAllowedException {
-    log.info("Получен POST запрос api/comment");
-    return new ResponseEntity<>(
-            commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
-  }
+//  @PostMapping(value = "comment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//  public ResponseEntity<?> addCommentMultipartFile(
+//          @RequestBody CommentRequest commentRequest, Principal principal)
+//          throws ContentNotAllowedException {
+//    log.info("Получен POST запрос api/comment");
+//    return new ResponseEntity<>(
+//            commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
+//  }
 
   @PostMapping(value = "moderation")
   public ResponseEntity<?> moderatePost(

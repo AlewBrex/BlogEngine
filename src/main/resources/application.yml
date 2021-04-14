@@ -2,7 +2,7 @@ spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
   datasource:
-    url: jdbc:mysql://localhost:3306/blogengine?allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=UTC&useSSL=false&verifyServerCertificate=false
+    url: jdbc:${CLEARDB_DATABASE_URL:mysql://localhost:3306/blogengine?allowPublicKeyRetrieval=true&useUnicode=true&serverTimezone=UTC&useSSL=false&verifyServerCertificate=false}
     username: root
     password: 3s5a6dslipknot
   flyway:
@@ -14,6 +14,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+server:
+  port: ${PORT:8080}
 
 blog:
   title: DevPub
@@ -49,6 +51,7 @@ comment:
 file:
   size: 5_242_880 #bytes
   upload_directory: upload
+  resize: avatars
   format: png
   height: 36 #px
   width: 36 #px
