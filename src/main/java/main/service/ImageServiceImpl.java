@@ -24,9 +24,6 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-//  @Value("${file.upload_directory}")
-  private final String loadPathImage = "upload";
-
   @Value("${file.format}")
   private String formatFile;
 
@@ -41,9 +38,10 @@ public class ImageServiceImpl implements ImageService {
 
   private final char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
   private final char[] digits = "1234567890".toCharArray();
-  private final String pathResizeImage = loadPathImage + "/";
+  private final String pathLoadImage = "upload/";
+  private final String pathResizeImage = "avatars/";
 
-  public String generateDirectory() {
+  public String generateDirectory(String namePath) {
     StringBuilder stringBuilder = new StringBuilder();
     for (int q = 0; q < 3; q++) {
       for (int i = 0; i < 3; i++) {
@@ -54,7 +52,7 @@ public class ImageServiceImpl implements ImageService {
         stringBuilder.append("/");
       }
     }
-    return pathResizeImage + stringBuilder.toString();
+    return namePath + stringBuilder;
   }
 
   public String generateName() {
@@ -63,13 +61,14 @@ public class ImageServiceImpl implements ImageService {
       int s = (int) (Math.random() * (digits.length - 1));
       stringBuilder.append(digits[s]);
     }
-    stringBuilder.append(".jpg");
+    stringBuilder.append(".png");
     return stringBuilder.toString();
   }
 
   @Override
   @SneakyThrows
-  public String uploadFileAndResizeImage(MultipartFile multipartFile) throws UpSizeAtUploadImage {
+  public String uploadFileAndResizeImage(MultipartFile multipartFile, Boolean resize)
+      throws UpSizeAtUploadImage {
     if (multipartFile.getSize() > sizeImage || multipartFile.isEmpty()) {
       throw new UpSizeAtUploadImage("Размер файла превышает допустимый размер");
     }
@@ -77,21 +76,23 @@ public class ImageServiceImpl implements ImageService {
     assert extension != null;
     if (extension.equals("jpg") || extension.equals("png")) {
       String pathImage = generateName();
-      String pathUpload = generateDirectory();
-      String path = (pathUpload + "/" + pathImage).replaceAll("\\\\", "/");
+      String pathUpload =
+          resize ? generateDirectory(pathResizeImage) : generateDirectory(pathLoadImage);
+      String path = ("/" + pathUpload + "/" + pathImage).replaceAll("\\\\", "/");
       Path path1 = Paths.get(pathUpload, pathImage);
       boolean p = new File(pathUpload).mkdirs();
       Files.createFile(path1);
       BufferedImage newImage = ImageIO.read(new ByteArrayInputStream(multipartFile.getBytes()));
-      BufferedImage bufferedImage = Scalr.resize(newImage, widthImage, heightImage);
+      BufferedImage bufferedImage =
+          resize ? Scalr.resize(newImage, widthImage, heightImage) : newImage;
       ImageIO.write(bufferedImage, formatFile, path1.toFile());
       return path;
     }
     return null;
   }
 
-  @SneakyThrows
   @Override
+  @SneakyThrows
   public void deletePhoto(String path) {
     if (!path.isBlank()) {
       Files.deleteIfExists(Path.of(path));

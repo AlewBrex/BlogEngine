@@ -6,6 +6,7 @@ import main.Main;
 import main.api.request.CommentRequest;
 import main.api.response.IdResponse;
 import main.api.response.ResultResponse;
+import main.api.response.post.ImageUploadResponse;
 import main.api.response.result.BadResultResponse;
 import main.exception.EmptyTextComment;
 import main.exception.LoginUserWrongCredentialsException;
@@ -25,6 +26,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -65,8 +67,6 @@ public class CommentServiceImpl implements CommentService {
       return new BadResultResponse(badResultResponse.getErrors());
     }
 
-    Document textOfHtml = Jsoup.parse(req.getText());
-    String newText = textOfHtml.text();
     Comment commentParent = commentRepository.findById(req.getParentId()).orElse(null);
     Post post = postRepository.getPostById(req.getPostId()).orElseThrow(NotPresentPost::new);
 
@@ -75,12 +75,24 @@ public class CommentServiceImpl implements CommentService {
       throw new EmptyTextComment();
     }
 
-    if (req.getPhoto() != null) {
-      imageService.uploadFileAndResizeImage(req.getPhoto());
-    }
-    Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText);
+    String newText = imageService.uploadFileAndResizeImage(req.getPhoto(), false);
+
+    Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText + req.getText());
     commentRepository.save(newComment);
     return new IdResponse(newComment.getId());
+  }
+
+  public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
+      throws LoginUserWrongCredentialsException {
+
+    if (multipartFile.isEmpty()) {
+      LOGGER.warn("Don't exist image for upload");
+    }
+    if (principal != null) {
+      return new ImageUploadResponse(imageService.uploadFileAndResizeImage(multipartFile, false));
+    }
+    LOGGER.info("User isn't authorized");
+    throw new LoginUserWrongCredentialsException();
   }
 
   private Boolean getTextNotOk(String text) {

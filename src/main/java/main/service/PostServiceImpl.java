@@ -291,7 +291,7 @@ public class PostServiceImpl implements PostService {
       LOGGER.warn("Don't exist image for upload");
     }
     if (principal != null) {
-      return new ImageUploadResponse(imageService.uploadFileAndResizeImage(multipartFile));
+      return new ImageUploadResponse(imageService.uploadFileAndResizeImage(multipartFile, false));
     }
     LOGGER.info("User isn't authorized");
     throw new LoginUserWrongCredentialsException();
@@ -354,9 +354,7 @@ public class PostServiceImpl implements PostService {
 
   private String getAnnounce(String text) {
     int firstSpace = text.lastIndexOf(" ");
-    String announce =
-        text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
-    return announce;
+    return text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
   }
 
   private FullInformPost getPostForUser(Post post) {

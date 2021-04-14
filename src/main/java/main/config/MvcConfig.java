@@ -12,8 +12,12 @@ public class MvcConfig implements WebMvcConfigurer {
   @Value("${file.upload_directory}")
   private String pathLoad;
 
+  @Value("${file.resize}")
+  private String pathResize;
+
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler(pathLoad + "/**").addResourceLocations("file:" + pathLoad + "/");
+    registry.addResourceHandler(pathResize + "/**").addResourceLocations("file:" + pathResize + "/");
   }
 }
