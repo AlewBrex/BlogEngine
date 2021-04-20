@@ -31,8 +31,8 @@ public class ApiPostController {
       value = "",
       params = {"offset", "limit", "mode"})
   public ResponseEntity<?> getPosts(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "mode") String mode) {
     log.info("Get all posts with parameters: offset {} + limit {} + mode {}", offset, limit, mode);
     return new ResponseEntity<>(
@@ -41,8 +41,8 @@ public class ApiPostController {
 
   @GetMapping(value = "search")
   public ResponseEntity<?> searchPost(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "query") String query) {
     log.info(
         "Received all posts with parameters: offset {} + limit {} + query {}",
@@ -54,8 +54,8 @@ public class ApiPostController {
 
   @GetMapping(value = "byDate")
   public ResponseEntity<?> getPostByDate(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "date") String date) {
     log.info(
         "Get all posts by date with parameters: offset {} + limit {} + date {}",
@@ -67,8 +67,8 @@ public class ApiPostController {
 
   @GetMapping(value = "byTag")
   public ResponseEntity<?> getPostTag(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "tag") String tag) {
     log.info(
         "Get all posts by tag with parameters: offset {} + limit {} + tag {}", offset, limit, tag);
@@ -77,8 +77,8 @@ public class ApiPostController {
 
   @GetMapping(value = "moderation")
   public ResponseEntity<?> getPostModeration(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "status") String status,
       Principal principal) {
     log.info(
@@ -92,8 +92,8 @@ public class ApiPostController {
 
   @GetMapping(value = "my")
   public ResponseEntity<?> getMePosts(
-      @RequestParam(name = "offset", defaultValue = "0") int offset,
-      @RequestParam(name = "limit", defaultValue = "10") int limit,
+      @RequestParam(name = "offset", defaultValue = "0") Integer offset,
+      @RequestParam(name = "limit", defaultValue = "10") Integer limit,
       @RequestParam(name = "status") String status,
       Principal principal) {
     log.info(
@@ -106,7 +106,7 @@ public class ApiPostController {
   }
 
   @GetMapping(value = "{id}")
-  public ResponseEntity<?> getPostId(@PathVariable int id, Principal principal) {
+  public ResponseEntity<?> getPostId(@PathVariable Integer id, Principal principal) {
     log.info("Get post by id");
     return new ResponseEntity<>(postServiceImpl.getPostsById(id, principal), HttpStatus.OK);
   }
@@ -119,7 +119,7 @@ public class ApiPostController {
 
   @PutMapping(value = "{id}")
   public ResponseEntity<?> editPost(
-      @PathVariable int id, @RequestBody PostRequest postRequest, Principal principal) {
+      @PathVariable Integer id, @RequestBody PostRequest postRequest, Principal principal) {
     log.info("Edit post");
     return new ResponseEntity<>(
         postServiceImpl.editPost(id, postRequest, principal), HttpStatus.OK);

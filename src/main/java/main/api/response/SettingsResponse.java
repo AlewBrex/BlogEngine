@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SettingsResponse {
   @JsonProperty("MULTIUSER_MODE")
-  private boolean multiuserMode;
+  private Boolean multiuserMode;
 
   @JsonProperty("POST_PREMODERATION")
-  private boolean postPremoderation;
+  private Boolean postPremoderation;
 
   @JsonProperty("STATISTICS_IS_PUBLIC")
-  private boolean statisticsIsPublic;
+  private Boolean statisticsIsPublic;
 }

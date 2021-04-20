@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AllUserInformationResponse {
-  private int id;
+  private Integer id;
   private String name;
   private String photo;
   private String email;
-  private boolean moderation;
-  private int moderationCount;
-  private boolean settings;
+  private Boolean moderation;
+  private Integer moderationCount;
+  private Boolean settings;
 }

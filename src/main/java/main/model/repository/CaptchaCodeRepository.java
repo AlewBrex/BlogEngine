@@ -17,6 +17,6 @@ public interface CaptchaCodeRepository extends JpaRepository<CaptchaCode, Intege
 
   @Modifying
   @Transactional
-  @Query(value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < ?", nativeQuery = true)
-  void deleteCaptcha(LocalDateTime localDateTime);
+  @Query(value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < (NOW() - 60 MINUTE)", nativeQuery = true)
+  void deleteCaptcha();
 }
