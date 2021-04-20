@@ -110,7 +110,6 @@ public class CaptchaServiceImpl implements CaptchaService {
 
   @Scheduled(fixedRate = 60*60*1000)
   private void deleteOldCaptcha(){
-    LocalDateTime localDateTime = LocalDateTime.now().minusSeconds(time);
-    captchaCodeRepository.deleteCaptcha(localDateTime);
+    captchaCodeRepository.deleteCaptcha();
   }
 }

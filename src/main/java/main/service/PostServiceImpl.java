@@ -218,12 +218,12 @@ public class PostServiceImpl implements PostService {
     if (principal != null) {
       Optional<User> optionalUser = userRepository.getByEmail(principal.getName());
       if (optionalUser.isPresent()) {
-
         if (isTitleOk(req.getTitle())) {
           badResultResponse.addError("title", "Заголовок слишком короткий");
         }
-        if (isTitleOk(req.getText())) {
-          badResultResponse.addError("text", "Текст публикации слишком короткий");
+
+        if (isTextOk(req.getText())) {
+          badResultResponse.addError("text", "Текст - публикации слишком короткий");
         }
 
         if (badResultResponse.hasErrors()) {
@@ -354,7 +354,8 @@ public class PostServiceImpl implements PostService {
 
   private String getAnnounce(String text) {
     int firstSpace = text.lastIndexOf(" ");
-    return text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
+    String announce = text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
+    return announce.replaceAll("(<.*?>)|(&.*?;)|([ ]{2,})", "");
   }
 
   private FullInformPost getPostForUser(Post post) {
@@ -408,11 +409,11 @@ public class PostServiceImpl implements PostService {
   }
 
   private Boolean isTitleOk(String title) {
-    return title.isBlank() || title.length() < minLengthTitle || title.length() > maxLengthTitle;
+    return title.isBlank() && title.length() < minLengthTitle && title.length() > maxLengthTitle;
   }
 
   private Boolean isTextOk(String text) {
-    return text.isBlank() || text.length() < minLengthText || text.length() > maxLengthText;
+    return text.isBlank() && text.length() < minLengthText && text.length() > maxLengthText;
   }
 
   private LocalDateTime parseLocalDateTime(long time) {

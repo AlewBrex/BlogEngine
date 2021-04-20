@@ -51,7 +51,8 @@ public class CommentServiceImpl implements CommentService {
   private final ImageService imageService;
 
   public ResultResponse addComment(CommentRequest req, Principal principal)
-      throws LoginUserWrongCredentialsException, EmptyTextComment, UpSizeAtUploadImage {
+      throws LoginUserWrongCredentialsException, EmptyTextComment, UpSizeAtUploadImage,
+          IllegalArgumentException {
     BadResultResponse badResultResponse = new BadResultResponse();
     User user = null;
     if (principal == null) {
@@ -67,17 +68,16 @@ public class CommentServiceImpl implements CommentService {
       return new BadResultResponse(badResultResponse.getErrors());
     }
 
-    Comment commentParent = commentRepository.findById(req.getParentId()).orElse(null);
     Post post = postRepository.getPostById(req.getPostId()).orElseThrow(NotPresentPost::new);
 
-    if (commentParent == null && post == null) {
+    Comment newComment;
+    if (req.getParentId() == null) {
+      newComment = new Comment(post, user, LocalDateTime.now(), req.getText());
       LOGGER.warn("Don't exist parent comment or post");
-      throw new EmptyTextComment();
+    } else {
+      Optional<Comment> commentParent = commentRepository.findById(req.getParentId());
+      newComment = new Comment(commentParent.get(), post, user, LocalDateTime.now(), req.getText());
     }
-
-    String newText = imageService.uploadFileAndResizeImage(req.getPhoto(), false);
-
-    Comment newComment = new Comment(commentParent, post, user, LocalDateTime.now(), newText + req.getText());
     commentRepository.save(newComment);
     return new IdResponse(newComment.getId());
   }

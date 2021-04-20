@@ -9,7 +9,7 @@ import java.util.Map;
 @Data
 public class BadResultResponse implements ResultResponse {
 
-  private boolean result;
+  private Boolean result;
   private Map<String, String> errors = new HashMap<>();
 
   public BadResultResponse(Map<String, String> errors) {

@@ -38,6 +38,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -190,7 +191,7 @@ public class UserServiceImpl implements UserService {
         userRepository
             .getByEmail(req.getEmail())
             .orElseThrow(LoginUserWrongCredentialsException::new);
-    if (isEmailNotCorrect(req.getEmail())) {
+    if (!isEmailCorrect(req.getEmail())) {
       LOGGER.info("Incorrect email");
       return new FalseResultResponse();
     }
@@ -241,6 +242,7 @@ public class UserServiceImpl implements UserService {
     return new OkResultResponse();
   }
 
+  @Transactional
   public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
@@ -253,18 +255,23 @@ public class UserServiceImpl implements UserService {
       user = optionalUser.get();
     }
 
+    assert user != null;
     String nameUserHttpSession = user.getName();
     String emailUserHttpSession = user.getEmail();
 
     boolean existEmail = userRepository.existEmailOrNot(emailUserHttpSession) != null;
     boolean notEqualsEmail = !change.getEmail().equals(emailUserHttpSession);
-    boolean nameTrue = !change.getName().isBlank() && !change.getName().equals(nameUserHttpSession);
+    boolean nameTrue = !change.getName().equals(" ");
 
-    if (nameTrue && !isEmailNotCorrect(change.getEmail()) && existEmail && notEqualsEmail) {
+    if (nameTrue) {
       user.setName(change.getName());
-      user.setEmail(change.getEmail());
     } else {
       badResultResponse.addError("name", "Имя указано неверно");
+    }
+
+    if (isEmailCorrect(change.getEmail()) && existEmail) {
+      user.setEmail(change.getEmail());
+    } else {
       badResultResponse.addError("email", "Этот e-mail уже зарегистрирован");
     }
 
@@ -291,7 +298,6 @@ public class UserServiceImpl implements UserService {
     if (badResultResponse.hasErrors()) {
       return badResultResponse;
     }
-
     return new OkResultResponse();
   }
 
@@ -323,7 +329,7 @@ public class UserServiceImpl implements UserService {
       badResultResponse.addError("email", "Этот e_mail уже зарегистрирован");
     }
 
-    if (isEmailNotCorrect(req.getEmail())) {
+    if (!isEmailCorrect(req.getEmail())) {
       badResultResponse.addError("email", "e_mail введен некорректно");
     }
 
@@ -367,8 +373,8 @@ public class UserServiceImpl implements UserService {
     return userRepository.getByEmail(email).isPresent();
   }
 
-  private Boolean isEmailNotCorrect(String email) {
-    return !email.matches(correctMail);
+  private Boolean isEmailCorrect(String email) {
+    return email.matches(correctMail);
   }
 
   private Boolean isNameBlank(String name) {
