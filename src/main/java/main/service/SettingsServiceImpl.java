@@ -53,7 +53,7 @@ public class SettingsServiceImpl implements SettingsService {
     throw new LoginUserWrongCredentialsException();
   }
 
-  private String blnString(boolean bln) {
+  private String blnString(Boolean bln) {
     return bln ? "YES" : "NO";
   }
 }

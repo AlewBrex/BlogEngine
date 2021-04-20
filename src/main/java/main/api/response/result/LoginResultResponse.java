@@ -6,7 +6,7 @@ import main.api.response.user.AllUserInformationResponse;
 
 @Data
 public class LoginResultResponse implements ResultResponse {
-  private boolean result;
+  private Boolean result;
   private AllUserInformationResponse user;
 
   public LoginResultResponse(AllUserInformationResponse user) {

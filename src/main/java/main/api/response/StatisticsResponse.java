@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StatisticsResponse implements ResultResponse {
-  private int postsCount;
-  private int likesCount;
-  private int dislikesCount;
-  private int viewsCount;
-  private long firstPublication;
+  private Integer postsCount;
+  private Integer likesCount;
+  private Integer dislikesCount;
+  private Integer viewsCount;
+  private Long firstPublication;
 }
