@@ -51,4 +51,11 @@ public class Comment {
     this.time = time;
     this.text = text;
   }
+
+  public Comment(Post post, User users, LocalDateTime time, String text) {
+    this.post = post;
+    this.users = users;
+    this.time = time;
+    this.text = text;
+  }
 }

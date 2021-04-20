@@ -65,14 +65,14 @@ public class ApiGeneralController {
         commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
   }
 
-//  @PostMapping(value = "comment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//  public ResponseEntity<?> addCommentMultipartFile(
-//          @RequestBody CommentRequest commentRequest, Principal principal)
-//          throws ContentNotAllowedException {
-//    log.info("Получен POST запрос api/comment");
-//    return new ResponseEntity<>(
-//            commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
-//  }
+  @PostMapping(value = "comment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<?> addCommentMultipartFile(
+          @RequestBody CommentRequest commentRequest, Principal principal)
+          throws ContentNotAllowedException {
+    log.info("Получен POST запрос api/comment");
+    return new ResponseEntity<>(
+            commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
+  }
 
   @PostMapping(value = "moderation")
   public ResponseEntity<?> moderatePost(

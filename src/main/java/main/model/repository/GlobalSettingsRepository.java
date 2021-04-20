@@ -15,23 +15,23 @@ public interface GlobalSettingsRepository extends JpaRepository<GlobalSettings, 
   @Query(
       value = "SELECT value FROM global_settings AS gs WHERE gs.code = 'MULTIUSER_MODE'",
       nativeQuery = true)
-  boolean getMultiUser();
+  Boolean getMultiUser();
 
   @Query(
       value = "SELECT value FROM global_settings AS gs WHERE gs.code = 'POST_PREMODERATION'",
       nativeQuery = true)
-  boolean getPostPremod();
+  Boolean getPostPremod();
 
   @Query(
       value = "SELECT value FROM global_settings AS gs WHERE gs.code = 'STATISTICS_IS_PUBLIC'",
       nativeQuery = true)
-  boolean getStatIsPub();
+  Boolean getStatIsPub();
 
   @Query(
       value =
           "SELECT count(*) FROM global_settings AS gs WHERE gs.code = 'STATISTICS_IS_PUBLIC' AND gs.value = 'NO'",
       nativeQuery = true)
-  boolean codeAndValue(String code, String value);
+  Boolean codeAndValue(String code, String value);
 
   @Modifying
   @Query(value = "TRUNCATE TABLE global_settings", nativeQuery = true)

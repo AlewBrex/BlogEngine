@@ -13,17 +13,17 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FullInformPost implements ResultResponse {
-  private int id;
-  private long timestamp;
-  private boolean active;
+  private Integer id;
+  private Long timestamp;
+  private Boolean active;
   private UserResponse user;
   private String title;
   private String text;
   private String announce;
-  private int likeCount;
-  private int dislikeCount;
-  private int commentCount;
-  private int viewCount;
+  private Integer likeCount;
+  private Integer dislikeCount;
+  private Integer commentCount;
+  private Integer viewCount;
   private List<CommentResponse> comments;
   private List<String> tags;
 }

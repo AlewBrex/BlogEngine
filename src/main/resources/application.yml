@@ -26,7 +26,7 @@ blog:
   copyright_from: 2020
 
 captcha:
-  time: 3_600 #seconds
+  time: 60
   length_key: 33
   image:
     format: png

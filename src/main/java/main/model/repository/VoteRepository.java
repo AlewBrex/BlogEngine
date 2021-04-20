@@ -20,20 +20,20 @@ public interface VoteRepository extends JpaRepository<Vote, Integer> {
   @Query(
       value = "SELECT * FROM post_votes AS p WHERE p.user_id = ?1 AND p.post_id = ?2",
       nativeQuery = true)
-  Vote getVoteByUserAndPost(int idUser, int idPost);
+  Vote getVoteByUserAndPost(Integer idUser, Integer idPost);
 
   @Query(
       value = "SELECT count(*) FROM post_votes AS p WHERE p.post_id = ? AND p.value = 1",
       nativeQuery = true)
-  Integer getLikeByPostId(int postId);
+  Integer getLikeByPostId(Integer postId);
 
   @Query(
       value = "SELECT count(*) FROM post_votes AS p WHERE p.post_id = ? AND p.value = -1",
       nativeQuery = true)
-  Integer getDislikeByPostId(int postId);
+  Integer getDislikeByPostId(Integer postId);
 
   @Query(
       value = "DELETE FROM post_votes AS p WHERE p.user_id = ?1 AND p.post_id = ?2",
       nativeQuery = true)
-  void deleteValue(int idUser, int postId);
+  void deleteValue(Integer idUser, Integer postId);
 }

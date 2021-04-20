@@ -9,34 +9,21 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 public class CommentRequest {
   @JsonProperty("parent_id")
-  private int parentId;
+  private Integer parentId;
 
   @JsonProperty("post_id")
-  private int postId;
+  private Integer postId;
 
   private String text;
-  private MultipartFile photo;
 
-  public CommentRequest(int parentId, int postId, String text) {
+  public CommentRequest(Integer parentId, Integer postId, String text) {
     this.parentId = parentId;
     this.postId = postId;
     this.text = text;
   }
 
-  public CommentRequest(int parentId, int postId, String text, MultipartFile photo) {
-    this.parentId = parentId;
+  public CommentRequest(Integer postId, String text) {
     this.postId = postId;
     this.text = text;
-    this.photo = photo;
-  }
-
-  public CommentRequest(MultipartFile photo) {
-    this.photo = photo;
-  }
-
-  public CommentRequest(int postId, String text, MultipartFile photo) {
-    this.postId = postId;
-    this.text = text;
-    this.photo = photo;
   }
 }

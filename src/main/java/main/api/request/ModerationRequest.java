@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ModerationRequest {
   @JsonProperty("post_id")
-  private int postId;
+  private Integer postId;
 
   private String decision;
 }

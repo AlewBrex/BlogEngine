@@ -31,7 +31,7 @@ public interface TagRepository extends JpaRepository<Tag, Integer> {
           "SELECT COUNT(*) AS count FROM tag2post AS tp JOIN posts ON tp.post_id = posts.id WHERE "
               + "posts.is_active = 1 AND posts.moderation_status = \"ACCEPTED\" AND posts.time < NOW() AND tag_id = ?",
       nativeQuery = true)
-  Integer countIdTag(int id);
+  Integer countIdTag(Integer id);
 
   @Query(
       value =
