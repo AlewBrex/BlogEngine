@@ -25,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,7 +52,7 @@ public class CommentServiceImpl implements CommentService {
   private final UserRepository userRepository;
   private final ImageService imageService;
 
-  public ResultResponse addComment(CommentRequest req, Principal principal)
+  public ResponseEntity<ResultResponse> addComment(CommentRequest req, Principal principal)
       throws LoginUserWrongCredentialsException, EmptyTextComment, UpSizeAtUploadImage,
           IllegalArgumentException {
     BadResultResponse badResultResponse = new BadResultResponse();
@@ -65,7 +67,6 @@ public class CommentServiceImpl implements CommentService {
     if (getTextNotOk(req.getText())) {
       LOGGER.warn("Short text or don't exist");
       badResultResponse.addError("text", "Tекст комментария не задан или слишком короткий");
-      return new BadResultResponse(badResultResponse.getErrors());
     }
 
     Post post = postRepository.getPostById(req.getPostId()).orElseThrow(NotPresentPost::new);
@@ -78,8 +79,12 @@ public class CommentServiceImpl implements CommentService {
       Optional<Comment> commentParent = commentRepository.findById(req.getParentId());
       newComment = new Comment(commentParent.get(), post, user, LocalDateTime.now(), req.getText());
     }
+
+    if (badResultResponse.hasErrors()) {
+      return new ResponseEntity<>(badResultResponse, HttpStatus.BAD_REQUEST);
+    }
     commentRepository.save(newComment);
-    return new IdResponse(newComment.getId());
+    return new ResponseEntity<>(new IdResponse(newComment.getId()), HttpStatus.OK);
   }
 
   public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
