@@ -7,6 +7,7 @@ import main.api.request.ModerationRequest;
 import main.api.request.SettingsRequest;
 import main.api.request.change.ChangeDataMyProfile;
 import main.api.response.InitResponse;
+import main.api.response.ResultResponse;
 import main.exception.ContentNotAllowedException;
 import main.service.*;
 import org.springframework.http.HttpStatus;
@@ -70,8 +71,7 @@ public class ApiGeneralController {
           @RequestBody CommentRequest commentRequest, Principal principal)
           throws ContentNotAllowedException {
     log.info("Получен POST запрос api/comment");
-    return new ResponseEntity<>(
-            commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
+    return commentServiceImpl.addComment(commentRequest, principal);
   }
 
   @PostMapping(value = "moderation")
