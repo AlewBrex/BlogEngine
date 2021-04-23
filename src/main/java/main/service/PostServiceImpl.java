@@ -29,6 +29,8 @@ import main.service.interfaces.PostService;
 import main.service.interfaces.TagService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -355,7 +357,8 @@ public class PostServiceImpl implements PostService {
   private String getAnnounce(String text) {
     int firstSpace = text.lastIndexOf(" ");
     String announce = text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
-    return announce.replaceAll("(<.*?>)|(&.*?;)|([ ]{2,})", "");
+    Document html = Jsoup.parse(announce);
+    return html.wholeText();
   }
 
   private FullInformPost getPostForUser(Post post) {
