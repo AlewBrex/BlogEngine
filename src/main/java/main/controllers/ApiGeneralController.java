@@ -62,8 +62,7 @@ public class ApiGeneralController {
       @RequestBody CommentRequest commentRequest, Principal principal)
       throws ContentNotAllowedException {
     log.info("Получен POST запрос api/comment");
-    return new ResponseEntity<>(
-        commentServiceImpl.addComment(commentRequest, principal), HttpStatus.OK);
+    return commentServiceImpl.addComment(commentRequest, principal);
   }
 
   @PostMapping(value = "comment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
