@@ -1,13 +1,15 @@
 package main.api.response.post;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import main.api.response.ResultResponse;
 
 import java.util.List;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class CountPostResponse implements ResultResponse {
   private Integer count;
   private List<PostResponse> posts;

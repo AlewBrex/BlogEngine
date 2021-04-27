@@ -1,9 +1,7 @@
 package main.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -12,10 +10,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "post_comments")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
+@RequiredArgsConstructor
 public class Comment {
   @Id
   @NotNull

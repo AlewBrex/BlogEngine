@@ -1,10 +1,12 @@
 package main.api.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class StatisticsResponse implements ResultResponse {
   private Integer postsCount;
   private Integer likesCount;

@@ -1,10 +1,12 @@
 package main.api.response.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class AllUserInformationResponse {
   private Integer id;
   private String name;

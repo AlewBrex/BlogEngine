@@ -1,11 +1,14 @@
 package main.api.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import main.api.response.user.UserWithPhotoResponse;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class CommentResponse {
   private Integer id;
   private Long timestamp;
