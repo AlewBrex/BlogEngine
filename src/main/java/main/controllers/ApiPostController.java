@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import main.api.request.LikeDislikeRequest;
 import main.api.request.PostRequest;
-import main.service.PostServiceImpl;
-import main.service.VoteServiceImpl;
+import main.service.interfaces.PostService;
+import main.service.interfaces.VoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,13 +18,13 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class ApiPostController {
 
-  private final PostServiceImpl postServiceImpl;
-  private final VoteServiceImpl voteServiceImpl;
+  private final PostService postService;
+  private final VoteService voteService;
 
   @GetMapping()
   public ResponseEntity<?> getPosts() {
     log.info("Get all posts");
-    return new ResponseEntity<>(postServiceImpl.getPosts(), HttpStatus.OK);
+    return new ResponseEntity<>(postService.getPosts(), HttpStatus.OK);
   }
 
   @GetMapping(
@@ -36,7 +36,7 @@ public class ApiPostController {
       @RequestParam(name = "mode") String mode) {
     log.info("Get all posts with parameters: offset {} + limit {} + mode {}", offset, limit, mode);
     return new ResponseEntity<>(
-        postServiceImpl.getPostsWithMode(mode, offset, limit), HttpStatus.OK);
+        postService.getPostsWithMode(mode, offset, limit), HttpStatus.OK);
   }
 
   @GetMapping(value = "search")
@@ -49,7 +49,7 @@ public class ApiPostController {
         offset,
         limit,
         query);
-    return new ResponseEntity<>(postServiceImpl.searchPosts(offset, limit, query), HttpStatus.OK);
+    return new ResponseEntity<>(postService.searchPosts(offset, limit, query), HttpStatus.OK);
   }
 
   @GetMapping(value = "byDate")
@@ -62,7 +62,7 @@ public class ApiPostController {
         offset,
         limit,
         date);
-    return new ResponseEntity<>(postServiceImpl.getPostsByDate(offset, limit, date), HttpStatus.OK);
+    return new ResponseEntity<>(postService.getPostsByDate(offset, limit, date), HttpStatus.OK);
   }
 
   @GetMapping(value = "byTag")
@@ -72,7 +72,7 @@ public class ApiPostController {
       @RequestParam(name = "tag") String tag) {
     log.info(
         "Get all posts by tag with parameters: offset {} + limit {} + tag {}", offset, limit, tag);
-    return new ResponseEntity<>(postServiceImpl.getPostsByTags(offset, limit, tag), HttpStatus.OK);
+    return new ResponseEntity<>(postService.getPostsByTags(offset, limit, tag), HttpStatus.OK);
   }
 
   @GetMapping(value = "moderation")
@@ -87,7 +87,7 @@ public class ApiPostController {
         limit,
         status);
     return new ResponseEntity<>(
-        postServiceImpl.getPostsForModeration(offset, limit, status, principal), HttpStatus.OK);
+        postService.getPostsForModeration(offset, limit, status, principal), HttpStatus.OK);
   }
 
   @GetMapping(value = "my")
@@ -102,19 +102,19 @@ public class ApiPostController {
         limit,
         status);
     return new ResponseEntity<>(
-        postServiceImpl.getMyPosts(offset, limit, status, principal), HttpStatus.OK);
+        postService.getMyPosts(offset, limit, status, principal), HttpStatus.OK);
   }
 
   @GetMapping(value = "{id}")
   public ResponseEntity<?> getPostId(@PathVariable Integer id, Principal principal) {
     log.info("Get post by id");
-    return new ResponseEntity<>(postServiceImpl.getPostsById(id, principal), HttpStatus.OK);
+    return new ResponseEntity<>(postService.getPostsById(id, principal), HttpStatus.OK);
   }
 
   @PostMapping(value = "")
   public ResponseEntity<?> addPost(@RequestBody PostRequest postRequest, Principal principal) {
     log.info("Add new post");
-    return new ResponseEntity<>(postServiceImpl.addPost(postRequest, principal), HttpStatus.OK);
+    return new ResponseEntity<>(postService.addPost(postRequest, principal), HttpStatus.OK);
   }
 
   @PutMapping(value = "{id}")
@@ -122,7 +122,7 @@ public class ApiPostController {
       @PathVariable Integer id, @RequestBody PostRequest postRequest, Principal principal) {
     log.info("Edit post");
     return new ResponseEntity<>(
-        postServiceImpl.editPost(id, postRequest, principal), HttpStatus.OK);
+        postService.editPost(id, postRequest, principal), HttpStatus.OK);
   }
 
   @PostMapping(value = "like")
@@ -130,7 +130,7 @@ public class ApiPostController {
       @RequestBody LikeDislikeRequest likeDislikeRequest, Principal principal) {
     log.info("Like");
     return new ResponseEntity<>(
-        voteServiceImpl.likePost(likeDislikeRequest, principal), HttpStatus.OK);
+        voteService.likePost(likeDislikeRequest, principal), HttpStatus.OK);
   }
 
   @PostMapping(value = "dislike")
@@ -138,6 +138,6 @@ public class ApiPostController {
       @RequestBody LikeDislikeRequest likeDislikeRequest, Principal principal) {
     log.info("Dislike");
     return new ResponseEntity<>(
-        voteServiceImpl.dislikePost(likeDislikeRequest, principal), HttpStatus.OK);
+        voteService.dislikePost(likeDislikeRequest, principal), HttpStatus.OK);
   }
 }

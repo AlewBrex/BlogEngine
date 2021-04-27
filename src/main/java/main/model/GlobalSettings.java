@@ -1,8 +1,7 @@
 package main.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -12,8 +11,7 @@ import javax.validation.constraints.NotNull;
 @Table(name = "global_settings")
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class GlobalSettings {
   @Id
   @NotNull

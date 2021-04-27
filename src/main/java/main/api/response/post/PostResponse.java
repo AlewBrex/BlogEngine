@@ -1,12 +1,12 @@
 package main.api.response.post;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import main.api.response.ResultResponse;
 import main.api.response.user.UserResponse;
 
 @Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PostResponse implements ResultResponse {
   private Integer id;
   private Long timestamp;

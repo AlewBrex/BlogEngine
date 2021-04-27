@@ -1,11 +1,11 @@
 package main.service;
 
 import lombok.RequiredArgsConstructor;
+import main.api.response.ResultResponse;
 import main.api.response.tag.FullInformTagResponse;
 import main.api.response.tag.TagResponse;
 import main.model.Tag;
 import main.model.repository.PostRepository;
-import main.model.repository.Tag2PostRepository;
 import main.model.repository.TagRepository;
 import main.service.interfaces.TagService;
 import org.springframework.stereotype.Service;
@@ -19,19 +19,34 @@ import java.util.List;
 public class TagServiceImpl implements TagService {
 
   private final TagRepository tagRepository;
-  private final Tag2PostRepository tag2PostRepository;
   private final PostRepository postRepository;
 
-  public FullInformTagResponse getAllTags() {
+  @Override
+  public ResultResponse getAllTags() {
     List<Tag> tagList = tagRepository.findAll();
     List<TagResponse> responseList = getListResponse(tagList);
     return new FullInformTagResponse(responseList);
   }
 
-  public FullInformTagResponse getTagsWithQuery(String query) {
+  @Override
+  public ResultResponse getTagsWithQuery(String query) {
     List<Tag> queryTagList = tagRepository.getTagByQuery(query);
     List<TagResponse> responseList = getListResponse(queryTagList);
     return new FullInformTagResponse(responseList);
+  }
+
+  @Override
+  public List<Tag> getTagsForPost(List<String> strings) {
+    List<Tag> tagList = new ArrayList<>();
+    for (String t : strings) {
+      Tag tag = tagRepository.getTagByName(t);
+      if (tag == null) {
+        tag = new Tag(t);
+        tagRepository.save(tag);
+      }
+      tagList.add(tag);
+    }
+    return tagList;
   }
 
   private List<TagResponse> getListResponse(List<Tag> list) {
@@ -66,19 +81,5 @@ public class TagServiceImpl implements TagService {
 
   private Double twoDot(Double d) {
     return Math.round(d * 100.0) / 100.0;
-  }
-
-  @Override
-  public List<Tag> getTagsForPost(List<String> strings) {
-    List<Tag> tagList = new ArrayList<>();
-    for (String t : strings) {
-      Tag tag = tagRepository.getTagByName(t);
-      if (tag == null) {
-        tag = new Tag(t);
-        tagRepository.save(tag);
-      }
-      tagList.add(tag);
-    }
-    return tagList;
   }
 }

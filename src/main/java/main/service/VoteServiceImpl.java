@@ -35,11 +35,13 @@ public class VoteServiceImpl implements VoteService {
   private final PostRepository postRepository;
   private final UserRepository userRepository;
 
+  @Override
   public ResultResponse likePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
     boolean like = setVote(likeDislikeRequest, 1, principal);
     return like ? new OkResultResponse() : new FalseResultResponse();
   }
 
+  @Override
   public ResultResponse dislikePost(LikeDislikeRequest likeDislikeRequest, Principal principal) {
     boolean dislike = setVote(likeDislikeRequest, -1, principal);
     return dislike ? new OkResultResponse() : new FalseResultResponse();

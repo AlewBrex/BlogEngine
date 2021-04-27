@@ -52,7 +52,7 @@ public class CaptchaServiceImpl implements CaptchaService {
   private int lengthKey;
 
   private final CaptchaCodeRepository captchaCodeRepository;
-  private char[] alphabetAndDigits = "abd2ef3g45h6k7n89rstyz".toCharArray();
+  private final char[] alphabetAndDigits = "abd2ef3g45h6k7n89rstyz".toCharArray();
 
   @Override
   public CaptchaResponse generateCaptcha() {
@@ -81,11 +81,9 @@ public class CaptchaServiceImpl implements CaptchaService {
   }
 
   private String getImageToString(BufferedImage bufferedImage) {
-    String image =
-        titlePath
-            + ", "
-            + Base64.getEncoder().encodeToString(getImageToByte(bufferedImage, format));
-    return image;
+    return titlePath
+        + ", "
+        + Base64.getEncoder().encodeToString(getImageToByte(bufferedImage, format));
   }
 
   private String encodingCaptcha(String stringCode) {
@@ -108,8 +106,8 @@ public class CaptchaServiceImpl implements CaptchaService {
     return bytes;
   }
 
-  @Scheduled(fixedRate = 60*60*1000)
-  private void deleteOldCaptcha(){
+  @Scheduled(fixedRate = 60 * 60 * 1000)
+  private void deleteOldCaptcha() {
     captchaCodeRepository.deleteCaptcha();
   }
 }

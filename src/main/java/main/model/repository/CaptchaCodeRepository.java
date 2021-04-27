@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-
 @Repository
 public interface CaptchaCodeRepository extends JpaRepository<CaptchaCode, Integer> {
 
@@ -17,6 +15,8 @@ public interface CaptchaCodeRepository extends JpaRepository<CaptchaCode, Intege
 
   @Modifying
   @Transactional
-  @Query(value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < (NOW() - 60 MINUTE)", nativeQuery = true)
+  @Query(
+      value = "DELETE FROM captcha_codes AS c_c WHERE c_c.time < (NOW() - 60 MINUTE)",
+      nativeQuery = true)
   void deleteCaptcha();
 }

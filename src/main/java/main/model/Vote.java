@@ -1,9 +1,7 @@
 package main.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -11,10 +9,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_votes")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
+@RequiredArgsConstructor
 public class Vote {
   @Id
   @NotNull
@@ -34,11 +30,4 @@ public class Vote {
 
   @Column(nullable = false, columnDefinition = "TINYINT")
   private int value;
-
-  public Vote(User users, Post post, LocalDateTime time, int value) {
-    this.users = users;
-    this.post = post;
-    this.time = time;
-    this.value = value;
-  }
 }

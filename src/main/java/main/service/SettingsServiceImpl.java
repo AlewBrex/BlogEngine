@@ -29,11 +29,13 @@ public class SettingsServiceImpl implements SettingsService {
   private final GlobalSettingsRepository repo;
   private final UserRepository userRepository;
 
+  @Override
   public SettingsResponse getSettings() {
     LOGGER.info("Получены настройки");
     return new SettingsResponse(repo.getMultiUser(), repo.getPostPremod(), repo.getStatIsPub());
   }
 
+  @Override
   public void saveGlobalSettings(SettingsRequest req, Principal principal)
       throws LoginUserWrongCredentialsException {
     User user;

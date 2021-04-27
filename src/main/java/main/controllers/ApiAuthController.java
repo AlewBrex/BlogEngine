@@ -9,7 +9,7 @@ import main.api.request.change.ChangePasswordRequest;
 import main.exception.ContentNotAllowedException;
 import main.exception.LoginUserWrongCredentialsException;
 import main.service.CaptchaServiceImpl;
-import main.service.UserServiceImpl;
+import main.service.interfaces.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,40 +22,40 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class ApiAuthController {
 
-  private final UserServiceImpl userServiceImpl;
+  private final UserService userService;
   private final CaptchaServiceImpl captchaService;
 
   @PostMapping(value = "login")
   public ResponseEntity login(@RequestBody LoginRequest loginRequest)
       throws LoginUserWrongCredentialsException {
     log.info("Get request api/auth/login");
-    return new ResponseEntity<>(userServiceImpl.login(loginRequest), HttpStatus.OK);
+    return new ResponseEntity<>(userService.login(loginRequest), HttpStatus.OK);
   }
 
   @GetMapping(value = "check")
   public ResponseEntity checkAuth(Principal principal) {
     log.info("Get request api/auth/check");
-    return new ResponseEntity<>(userServiceImpl.check(principal), HttpStatus.OK);
+    return new ResponseEntity<>(userService.check(principal), HttpStatus.OK);
   }
 
   @PostMapping(value = "restore")
   public ResponseEntity restorePassword(@RequestBody RestoreRequest restoreRequest) {
     log.info("Get request api/auth/restore");
-    return new ResponseEntity<>(userServiceImpl.restorePassword(restoreRequest), HttpStatus.OK);
+    return new ResponseEntity<>(userService.restorePassword(restoreRequest), HttpStatus.OK);
   }
 
   @PostMapping(value = "password")
   public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
     log.info("Get request api/auth/password");
     return new ResponseEntity<>(
-        userServiceImpl.changePassword(changePasswordRequest), HttpStatus.OK);
+        userService.changePassword(changePasswordRequest), HttpStatus.OK);
   }
 
   @PostMapping(value = "register")
   public ResponseEntity register(@RequestBody RegisterRequest registerRequest)
       throws ContentNotAllowedException {
     log.info("Get request api/auth/register");
-    return new ResponseEntity<>(userServiceImpl.registerUser(registerRequest), HttpStatus.OK);
+    return new ResponseEntity<>(userService.registerUser(registerRequest), HttpStatus.OK);
   }
 
   @GetMapping(value = "captcha")
@@ -67,6 +67,6 @@ public class ApiAuthController {
   @GetMapping(value = "logout")
   public ResponseEntity logout() {
     log.info("Get request api/auth/logout");
-    return new ResponseEntity<>(userServiceImpl.logout(), HttpStatus.OK);
+    return new ResponseEntity<>(userService.logout(), HttpStatus.OK);
   }
 }

@@ -1,19 +1,15 @@
 package main.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "tags")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
+@RequiredArgsConstructor
 public class Tag {
   @Id
   @NotNull

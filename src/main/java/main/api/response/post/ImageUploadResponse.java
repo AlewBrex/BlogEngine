@@ -1,13 +1,11 @@
 package main.api.response.post;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import main.api.response.ResultResponse;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class ImageUploadResponse implements ResultResponse {
   private String pathUpload;
 }

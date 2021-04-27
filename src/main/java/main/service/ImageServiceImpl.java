@@ -41,7 +41,7 @@ public class ImageServiceImpl implements ImageService {
   private final String pathLoadImage = "upload/";
   private final String pathResizeImage = "avatars/";
 
-  public String generateDirectory(String namePath) {
+  private String generateDirectory(String namePath) {
     StringBuilder stringBuilder = new StringBuilder();
     for (int q = 0; q < 3; q++) {
       for (int i = 0; i < 3; i++) {
@@ -55,7 +55,7 @@ public class ImageServiceImpl implements ImageService {
     return namePath + stringBuilder;
   }
 
-  public String generateName() {
+  private String generateName() {
     StringBuilder stringBuilder = new StringBuilder();
     for (int i = 0; i < 5; i++) {
       int s = (int) (Math.random() * (digits.length - 1));

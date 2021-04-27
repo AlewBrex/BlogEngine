@@ -23,7 +23,10 @@ import main.model.Comment;
 import main.model.Post;
 import main.model.Tag;
 import main.model.User;
-import main.model.repository.*;
+import main.model.repository.CommentRepository;
+import main.model.repository.PostRepository;
+import main.model.repository.UserRepository;
+import main.model.repository.VoteRepository;
 import main.service.interfaces.ImageService;
 import main.service.interfaces.PostService;
 import main.service.interfaces.TagService;
@@ -72,12 +75,14 @@ public class PostServiceImpl implements PostService {
   private final ImageService imageService;
   private final TagService tagService;
 
+  @Override
   public ResultResponse getPosts() {
     List<Post> list = postRepository.modeRecentAll();
     List<PostResponse> responseList = getListPostResponse(list);
     return new CountPostResponse(countPost(), responseList);
   }
 
+  @Override
   public ResultResponse getPostsWithMode(String mode, int offset, int limit) {
     if (mode.isBlank()) {
       LOGGER.info("mode not set. Output of all posts");
@@ -102,6 +107,7 @@ public class PostServiceImpl implements PostService {
     return new CountPostResponse(countPost(), responseList);
   }
 
+  @Override
   public ResultResponse searchPosts(int offset, int limit, String query) {
     if (query.isBlank()) {
       LOGGER.info("Query not set. Output of all posts");
@@ -114,6 +120,7 @@ public class PostServiceImpl implements PostService {
     return new CountPostResponse(countPosts, responseList);
   }
 
+  @Override
   public ResultResponse getPostsByDate(int offset, int limit, String date) {
     int count = postRepository.countPostsByDate(date).orElse(0);
     List<Post> listPostsByDate = postRepository.listPostsByDate(offset, limit, date);
@@ -121,6 +128,7 @@ public class PostServiceImpl implements PostService {
     return new CountPostResponse(count, responseList);
   }
 
+  @Override
   public ResultResponse getPostsByTags(int offset, int limit, String tag) {
     int count = postRepository.countPostsByTags(tag).orElse(0);
     List<Post> listPostsByTag = postRepository.listPostByTags(offset, limit, tag);
@@ -128,6 +136,7 @@ public class PostServiceImpl implements PostService {
     return new CountPostResponse(count, responseList);
   }
 
+  @Override
   public ResultResponse getPostsForModeration(
       int offset, int limit, String status, Principal principal)
       throws LoginUserWrongCredentialsException {
@@ -165,6 +174,7 @@ public class PostServiceImpl implements PostService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse getMyPosts(int offset, int limit, String status, Principal principal)
       throws LoginUserWrongCredentialsException {
     if (principal != null) {
@@ -201,6 +211,7 @@ public class PostServiceImpl implements PostService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse getPostsById(int id, Principal principal) throws NotPresentPost {
     Post post = postRepository.getPostById(id).orElseThrow(NotPresentPost::new);
     if (principal != null) {
@@ -214,6 +225,7 @@ public class PostServiceImpl implements PostService {
     return getPostForUser(post);
   }
 
+  @Override
   public ResultResponse addPost(PostRequest req, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
@@ -248,6 +260,7 @@ public class PostServiceImpl implements PostService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse editPost(int idPost, PostRequest req, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
 
@@ -286,6 +299,7 @@ public class PostServiceImpl implements PostService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
       throws LoginUserWrongCredentialsException {
 
@@ -299,6 +313,7 @@ public class PostServiceImpl implements PostService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse moderatePost(ModerationRequest req, Principal principal) {
     Post post = postRepository.getOne(req.getPostId());
     Optional<User> user = userRepository.getByEmail(principal.getName());
@@ -315,7 +330,8 @@ public class PostServiceImpl implements PostService {
     return new FalseResultResponse();
   }
 
-  public CalendarResponse postsByCalendar(Integer year) {
+  @Override
+  public ResultResponse postsByCalendar(Integer year) {
     int newYear = year == null ? LocalDateTime.now().getYear() : year;
 
     List<Integer> years = postRepository.yearsWithPosts();
@@ -356,7 +372,8 @@ public class PostServiceImpl implements PostService {
 
   private String getAnnounce(String text) {
     int firstSpace = text.lastIndexOf(" ");
-    String announce = text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
+    String announce =
+        text.length() > maxLengthAnnounce ? text.substring(0, firstSpace).concat("...") : text;
     Document html = Jsoup.parse(announce);
     return html.wholeText();
   }
@@ -384,11 +401,9 @@ public class PostServiceImpl implements PostService {
 
   private List<CommentResponse> getListComments(Post post) {
     List<CommentResponse> comments = new ArrayList<>();
-    List<Comment> list = new ArrayList<>();
-    list.addAll(commentRepository.getListCommentsByPostId(post.getId()));
+    List<Comment> list = new ArrayList<>(commentRepository.getListCommentsByPostId(post.getId()));
 
-    for (int i = 0; i < list.size(); i++) {
-      Comment c = list.get(i);
+    for (Comment c : list) {
       CommentResponse commentResponse =
           new CommentResponse(
               c.getId(),

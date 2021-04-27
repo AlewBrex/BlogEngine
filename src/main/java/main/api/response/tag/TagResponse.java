@@ -1,10 +1,10 @@
 package main.api.response.tag;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class TagResponse {
   private String name;
   private Double weight;

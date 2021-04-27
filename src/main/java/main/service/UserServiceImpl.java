@@ -86,6 +86,7 @@ public class UserServiceImpl implements UserService {
   private final GlobalSettingsRepository settingsRepository;
   private final AuthenticationManager authenticationManager;
 
+  @Override
   public ResultResponse check(Principal principal) {
     if (principal == null) {
       return new FalseResultResponse();
@@ -94,6 +95,7 @@ public class UserServiceImpl implements UserService {
     return new LoginResultResponse(getAllUserInformation(user));
   }
 
+  @Override
   public ResultResponse login(LoginRequest req)
       throws LoginUserWrongCredentialsException, IllegalStateException {
     String email = req.getEmail();
@@ -122,11 +124,13 @@ public class UserServiceImpl implements UserService {
     return new LoginResultResponse(getAllUserInformation(currentUser));
   }
 
+  @Override
   public ResultResponse logout() {
     SecurityContextHolder.clearContext();
     return new OkResultResponse();
   }
 
+  @Override
   public ResultResponse myStatistics(Principal principal)
       throws LoginUserWrongCredentialsException, IllegalStateException {
     User user;
@@ -155,6 +159,7 @@ public class UserServiceImpl implements UserService {
     throw new LoginUserWrongCredentialsException();
   }
 
+  @Override
   public ResultResponse allStatistics(Principal principal)
       throws LoginUserWrongCredentialsException, WrongParameterException {
     User user;
@@ -185,6 +190,7 @@ public class UserServiceImpl implements UserService {
         postsCount, allLikesCount, allDislikeCount, allViewsCount, timeFirstPublication);
   }
 
+  @Override
   public ResultResponse restorePassword(RestoreRequest req)
       throws LoginUserWrongCredentialsException {
     User user =
@@ -210,6 +216,7 @@ public class UserServiceImpl implements UserService {
     return new OkResultResponse();
   }
 
+  @Override
   public ResultResponse changePassword(ChangePasswordRequest req) throws UsernameNotFoundException {
     User user =
         userRepository
@@ -228,6 +235,7 @@ public class UserServiceImpl implements UserService {
     return new OkResultResponse();
   }
 
+  @Override
   public ResultResponse registerUser(RegisterRequest req) throws ContentNotAllowedException {
     if (!settingsRepository.getMultiUser()) {
       throw new ContentNotAllowedException().createWith("регистрация", "Регистрация запрещена!");
@@ -242,6 +250,7 @@ public class UserServiceImpl implements UserService {
     return new OkResultResponse();
   }
 
+  @Override
   @Transactional
   public ResultResponse editMyProfile(ChangeDataMyProfile change, Principal principal) {
     BadResultResponse badResultResponse = new BadResultResponse();
@@ -256,11 +265,9 @@ public class UserServiceImpl implements UserService {
     }
 
     assert user != null;
-    String nameUserHttpSession = user.getName();
     String emailUserHttpSession = user.getEmail();
 
     boolean existEmail = userRepository.existEmailOrNot(emailUserHttpSession) != null;
-    boolean notEqualsEmail = !change.getEmail().equals(emailUserHttpSession);
     boolean nameTrue = !change.getName().equals(" ");
 
     if (nameTrue) {
@@ -299,6 +306,16 @@ public class UserServiceImpl implements UserService {
       return badResultResponse;
     }
     return new OkResultResponse();
+  }
+
+  @Override
+  public User getCurrentUserByEmail(String email) {
+    Optional<User> currentUser = userRepository.getByEmail(email);
+    if (currentUser.isEmpty()) {
+      throw new UsernameNotFoundException(String.format("user with email %s not found", email));
+    } else {
+      return currentUser.get();
+    }
   }
 
   private String generateHashCode() {
@@ -389,15 +406,5 @@ public class UserServiceImpl implements UserService {
     return captcha.isBlank()
         || captchaSecret.isBlank()
         || captchaService.checkCaptcha(captcha, captchaSecret);
-  }
-
-  @Override
-  public User getCurrentUserByEmail(String email) {
-    Optional<User> currentUser = userRepository.getByEmail(email);
-    if (currentUser.isEmpty()) {
-      throw new UsernameNotFoundException(String.format("user with email %s not found", email));
-    } else {
-      return currentUser.get();
-    }
   }
 }

@@ -1,8 +1,7 @@
 package main.api.response.post;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import main.api.response.CommentResponse;
 import main.api.response.ResultResponse;
 import main.api.response.user.UserResponse;
@@ -10,8 +9,7 @@ import main.api.response.user.UserResponse;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class FullInformPost implements ResultResponse {
   private Integer id;
   private Long timestamp;

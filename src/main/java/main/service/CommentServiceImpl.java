@@ -22,8 +22,6 @@ import main.service.interfaces.CommentService;
 import main.service.interfaces.ImageService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +50,7 @@ public class CommentServiceImpl implements CommentService {
   private final UserRepository userRepository;
   private final ImageService imageService;
 
+  @Override
   public ResponseEntity<ResultResponse> addComment(CommentRequest req, Principal principal)
       throws LoginUserWrongCredentialsException, EmptyTextComment, UpSizeAtUploadImage,
           IllegalArgumentException {
@@ -87,6 +86,7 @@ public class CommentServiceImpl implements CommentService {
     return new ResponseEntity<>(new IdResponse(newComment.getId()), HttpStatus.OK);
   }
 
+  @Override
   public ResultResponse uploadImage(MultipartFile multipartFile, Principal principal)
       throws LoginUserWrongCredentialsException {
 
